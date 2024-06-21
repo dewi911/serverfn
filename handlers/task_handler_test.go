@@ -1,90 +1,131 @@
-package tests
+package handlers
 
 import (
 	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"testing"
-	"time"
-
-	"serverfn/handlers"
 	"serverfn/models"
+	"testing"
+
+	"github.com/sourcegraph/conc/pool"
 )
 
 func TestCreateTaskHandler(t *testing.T) {
 	manager := models.NewTaskManager()
-	handler := handlers.NewTaskHandler(manager)
+	taskQueue := make(chan *models.Task, 10)
+	handler := NewTaskHandler(manager, taskQueue)
 
-	server := httptest.NewServer(http.HandlerFunc(handler.CreateTaskHandler))
+	p := pool.New().WithMaxGoroutines(10)
+
+	server := httptest.NewServer(http.HandlerFunc(handler.CreateTaskHandler(p)))
 	defer server.Close()
 
 	task := models.Task{
 		Method:  "GET",
 		URL:     "http://google.com",
-		Headers: map[string]string{"Authentication": "Basic bG9naW46cGFzc3dvcmQ="},
+		Headers: map[string]string{"Content-Type": "application/json"},
 	}
 
-	data, err := json.Marshal(task)
+	taskBytes, err := json.Marshal(task)
 	if err != nil {
-		t.Fatalf("failed task: %v", err)
+		t.Fatalf("Failed to marshal task: %v", err)
 	}
 
-	resp, err := http.Post(server.URL+"/task", "application/json", bytes.NewBuffer(data))
+	resp, err := http.Post(server.URL, "application/json", bytes.NewReader(taskBytes))
 	if err != nil {
-		t.Fatalf("failed create task: %v", err)
+		t.Fatalf("Failed to send request: %v", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected status code %d, got %d", http.StatusOK, resp.StatusCode)
+		t.Fatalf("Expected status %d, got %d", http.StatusOK, resp.StatusCode)
 	}
 
-	var respData map[string]string
-	if err := json.NewDecoder(resp.Body).Decode(&respData); err != nil {
-		t.Fatalf("failed decode: %v", err)
+	var result map[string]string
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	if err != nil {
+		t.Fatalf("Failed to decode response: %v", err)
 	}
 
-	if _, ok := respData["id"]; !ok {
-		t.Fatalf("response does not have task ID")
+	if _, exists := result["id"]; !exists {
+		t.Fatalf("Expected task ID in response, but got none")
+	}
+}
+
+func TestCreateTaskHandler_InvalidMethod(t *testing.T) {
+	manager := models.NewTaskManager()
+	taskQueue := make(chan *models.Task, 10)
+	handler := NewTaskHandler(manager, taskQueue)
+
+	p := pool.New().WithMaxGoroutines(10)
+
+	server := httptest.NewServer(http.HandlerFunc(handler.CreateTaskHandler(p)))
+	defer server.Close()
+
+	resp, err := http.Get(server.URL)
+	if err != nil {
+		t.Fatalf("Failed to send request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusMethodNotAllowed {
+		t.Fatalf("Expected status %d, got %d", http.StatusMethodNotAllowed, resp.StatusCode)
 	}
 }
 
 func TestGetTaskHandler(t *testing.T) {
 	manager := models.NewTaskManager()
-	handler := handlers.NewTaskHandler(manager)
-
-	server := httptest.NewServer(http.HandlerFunc(handler.CreateTaskHandler))
-	defer server.Close()
+	taskQueue := make(chan *models.Task, 10)
+	handler := NewTaskHandler(manager, taskQueue)
 
 	task := models.Task{
 		Method:  "GET",
 		URL:     "http://google.com",
-		Headers: map[string]string{"Authentication": "Basic bG9naW46cGFzc3dvcmQ="},
+		Headers: map[string]string{"Content-Type": "application/json"},
+		Status:  models.StatusNew,
 	}
-	taskID := manager.AddTask(&task)
+	taskID := handler.manager.AddTask(&task)
 
-	server = httptest.NewServer(http.HandlerFunc(handler.GetTaskHandler))
+	server := httptest.NewServer(http.HandlerFunc(handler.GetTaskHandler))
 	defer server.Close()
-
-	time.Sleep(1 * time.Second)
 
 	resp, err := http.Get(server.URL + "/task/" + taskID)
 	if err != nil {
-		t.Fatalf("failed task: %v", err)
+		t.Fatalf("Failed to send request: %v", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected status code %d, got %d", http.StatusOK, resp.StatusCode)
+		t.Fatalf("Expected status %d, got %d", http.StatusOK, resp.StatusCode)
 	}
 
-	var respTask models.Task
-	if err := json.NewDecoder(resp.Body).Decode(&respTask); err != nil {
-		t.Fatalf("failed decode: %v", err)
+	var result models.Task
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	if err != nil {
+		t.Fatalf("Failed to decode response: %v", err)
 	}
 
-	if respTask.ID != taskID {
-		t.Fatalf("expected task ID %s, got %s", taskID, respTask.ID)
+	if result.Method != task.Method || result.URL != task.URL || result.Status != task.Status {
+		t.Fatalf("Expected task %+v, got %+v", task, result)
+	}
+}
+
+func TestGetTaskHandler_NotFound(t *testing.T) {
+	manager := models.NewTaskManager()
+	taskQueue := make(chan *models.Task, 10)
+	handler := NewTaskHandler(manager, taskQueue)
+
+	server := httptest.NewServer(http.HandlerFunc(handler.GetTaskHandler))
+	defer server.Close()
+
+	resp, err := http.Get(server.URL + "/task/nonexistent")
+	if err != nil {
+		t.Fatalf("Failed to send request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNotFound {
+		t.Fatalf("Expected status %d, got %d", http.StatusNotFound, resp.StatusCode)
 	}
 }

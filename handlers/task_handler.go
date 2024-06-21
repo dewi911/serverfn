@@ -2,40 +2,48 @@ package handlers
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
-
 	"serverfn/models"
+
+	"github.com/sourcegraph/conc/pool"
 )
 
 type TaskHandler struct {
-	manager *models.TaskManager
+	manager   *models.TaskManager
+	taskQueue chan *models.Task
 }
 
-func NewTaskHandler(manager *models.TaskManager) *TaskHandler {
-	return &TaskHandler{manager: manager}
+func NewTaskHandler(manager *models.TaskManager, taskQueue chan *models.Task) *TaskHandler {
+	return &TaskHandler{manager: manager, taskQueue: taskQueue}
 }
 
-func (h *TaskHandler) CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "not allowed", http.StatusMethodNotAllowed)
-		return
+func (h *TaskHandler) CreateTaskHandler(p *pool.Pool) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		var task models.Task
+		if err := json.NewDecoder(r.Body).Decode(&task); err != nil {
+			http.Error(w, "bad request", http.StatusBadRequest)
+			return
+		}
+
+		task.Status = models.StatusNew
+		taskID := h.manager.AddTask(&task)
+
+		h.taskQueue <- &task
+
+		p.Go(func() {
+			h.ExecuteTask(&task)
+		})
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{"id": taskID})
 	}
-
-	var task models.Task
-	if err := json.NewDecoder(r.Body).Decode(&task); err != nil {
-		http.Error(w, "bad request", http.StatusBadRequest)
-		return
-	}
-
-	task.Status = models.StatusNew
-	taskID := h.manager.AddTask(&task)
-
-	go h.executeTask(&task)
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"id": taskID})
 }
 
 func (h *TaskHandler) GetTaskHandler(w http.ResponseWriter, r *http.Request) {
@@ -56,7 +64,7 @@ func (h *TaskHandler) GetTaskHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(task)
 }
 
-func (h *TaskHandler) executeTask(task *models.Task) {
+func (h *TaskHandler) ExecuteTask(task *models.Task) {
 	task.Status = models.StatusInProcess
 	h.manager.UpdateTask(task)
 
@@ -80,7 +88,7 @@ func (h *TaskHandler) executeTask(task *models.Task) {
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		task.Status = models.StatusError
 		h.manager.UpdateTask(task)
