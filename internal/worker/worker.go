@@ -2,19 +2,20 @@ package worker
 
 import (
 	"context"
-	"github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"serverfn/internal/domain"
 	"serverfn/internal/queue"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 type Worker struct {
 	id        int
 	taskQueue queue.TaskQueue
 	taskRepo  domain.TaskRepository
-	quit      chan bool
+	quit      chan struct{}
 	logger    *logrus.Logger
 }
 
@@ -23,15 +24,17 @@ func NewWorker(id int, taskQueue queue.TaskQueue, taskRepo domain.TaskRepository
 		id:        id,
 		taskQueue: taskQueue,
 		taskRepo:  taskRepo,
-		quit:      make(chan bool),
+		quit:      make(chan struct{}),
 		logger:    logger,
 	}
 }
 
 func (w *Worker) Start() {
+	w.logger.WithField("workerID", w.id).Info("Worker started")
 	for {
 		select {
 		case <-w.quit:
+			w.logger.WithField("workerID", w.id).Info("Worker stopping")
 			return
 		default:
 			task := w.taskQueue.Dequeue()
@@ -43,11 +46,14 @@ func (w *Worker) Start() {
 }
 
 func (w *Worker) Stop() {
-	w.quit <- true
+	close(w.quit)
 }
 
 func (w *Worker) processTask(task *domain.Task) {
-	w.logger.WithField("taskID", task.ID).Info("Processing task")
+	w.logger.WithFields(logrus.Fields{
+		"workerID": w.id,
+		"taskID":   task.ID,
+	}).Info("Processing task")
 
 	client := &http.Client{
 		Timeout: time.Second * 30,

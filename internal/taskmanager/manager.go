@@ -19,6 +19,7 @@ type taskManager struct {
 	workers   []*worker.Worker
 	logger    *logrus.Logger
 	wg        sync.WaitGroup
+	quit      chan struct{}
 }
 
 func NewTaskManager(queueCapacity, workerCount int, taskRepo domain.TaskRepository, logger *logrus.Logger) TaskManager {
@@ -26,6 +27,7 @@ func NewTaskManager(queueCapacity, workerCount int, taskRepo domain.TaskReposito
 	tm := &taskManager{
 		taskQueue: taskQueue,
 		logger:    logger,
+		quit:      make(chan struct{}),
 	}
 
 	tm.workers = make([]*worker.Worker, workerCount)
@@ -48,12 +50,14 @@ func (tm *taskManager) Start() {
 }
 
 func (tm *taskManager) Stop() {
+	tm.logger.Info("Stopping task manager...")
+	close(tm.quit)
 	for _, w := range tm.workers {
 		w.Stop()
 	}
 	tm.taskQueue.Close()
 	tm.wg.Wait()
-	tm.logger.Info("All workers have stopped")
+	tm.logger.Info("Task manager stopped")
 }
 
 func (tm *taskManager) CreateTask(task *domain.Task) {

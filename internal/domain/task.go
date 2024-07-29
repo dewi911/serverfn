@@ -31,17 +31,17 @@ func (t Task) Validate() error {
 }
 
 type Task struct {
-	ID         int64      `json:"id"`
-	Method     string     `json:"method"`
-	TaskStatus TaskStatus `json:"task_status"`
-	URL        string     `json:"url"`
-	Headers    Headers    `json:"headers"`
+	ID         int64      `json:"id" example:"1"`
+	Method     string     `json:"method" example:"GET"`
+	TaskStatus TaskStatus `json:"task_status" example:"new"`
+	URL        string     `json:"url" example:"http://google.com"`
+	Headers    Headers    `json:"headers" `
 }
 
 type TaskCreateInput struct {
-	Method     string     `json:"method"`
-	TaskStatus TaskStatus `json:"task_status"`
-	URL        string     `json:"url"`
+	Method     string     `json:"method" example:"GET"`
+	TaskStatus TaskStatus `json:"task_status" example:"new"`
+	URL        string     `json:"url" example:"http://google.com"`
 	Headers    Headers    `json:"headers"`
 }
 

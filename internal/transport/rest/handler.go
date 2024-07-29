@@ -3,11 +3,18 @@ package rest
 import (
 	"errors"
 	"github.com/gorilla/mux"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"net/http"
+	_ "serverfn/docs"
 	"serverfn/internal/domain"
 	"strconv"
 )
 
+// @title Server API
+// @version 1.0
+// @description This is a server API.
+// @host localhost:8080
+// @BasePath /
 type Services interface {
 	GetTaskService() domain.TaskService
 }
@@ -25,6 +32,9 @@ func NewHandler(s Services) *Handler {
 func (h *Handler) InitRouter() *mux.Router {
 	r := mux.NewRouter()
 
+	r.PathPrefix("/swagger").Handler(httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
+	))
 	task := r.PathPrefix("/task").Subrouter()
 	{
 		task.HandleFunc("", h.CreateTask).Methods(http.MethodPost)

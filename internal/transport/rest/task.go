@@ -7,6 +7,14 @@ import (
 	"serverfn/internal/domain"
 )
 
+// @Summary Create a new task
+// @Description Create a new task with the input payload
+// @Tags tasks
+// @Accept json
+// @Produce json
+// @Param task body domain.TaskCreateInput true "Create task"
+// @Success 200 {object} domain.TaskResponse
+// @Router /task [post]
 func (h *Handler) CreateTask(w http.ResponseWriter, r *http.Request) {
 	reqBytes, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -46,6 +54,14 @@ func (h *Handler) CreateTask(w http.ResponseWriter, r *http.Request) {
 	w.Write(response)
 }
 
+// @Summary Get a task by ID
+// @Description Get details of a task by its ID
+// @Tags tasks
+// @Accept json
+// @Produce json
+// @Param id path int true "Task ID"
+// @Success 200 {object} domain.Task
+// @Router /task/{id} [get]
 func (h *Handler) GetTask(w http.ResponseWriter, r *http.Request) {
 	id, err := getIdFromRequest(r)
 	if err != nil {
@@ -72,6 +88,13 @@ func (h *Handler) GetTask(w http.ResponseWriter, r *http.Request) {
 	w.Write(response)
 }
 
+// @Summary Get all tasks
+// @Description Get details of all tasks
+// @Tags tasks
+// @Accept json
+// @Produce json
+// @Success 200 {array} domain.Task
+// @Router /task [get]
 func (h *Handler) GetAllTasks(w http.ResponseWriter, r *http.Request) {
 	tasks, err := h.taskService.GetAllTask(r.Context())
 	if err != nil {
@@ -91,6 +114,14 @@ func (h *Handler) GetAllTasks(w http.ResponseWriter, r *http.Request) {
 	w.Write(response)
 }
 
+// @Summary Delete a task
+// @Description Delete a task by its ID
+// @Tags tasks
+// @Accept json
+// @Produce json
+// @Param id path int true "Task ID"
+// @Success 204 "No Content"
+// @Router /task/{id} [delete]
 func (h *Handler) DeleteTask(w http.ResponseWriter, r *http.Request) {
 	id, err := getIdFromRequest(r)
 	if err != nil {
@@ -109,6 +140,15 @@ func (h *Handler) DeleteTask(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// @Summary Update a task
+// @Description Update a task's status by its ID
+// @Tags tasks
+// @Accept json
+// @Produce json
+// @Param id path int true "Task ID"
+// @Param task body domain.TaskUpdateInput true "Update task"
+// @Success 200 "OK"
+// @Router /task/{id} [put]
 func (h *Handler) UpdateTask(w http.ResponseWriter, r *http.Request) {
 	id, err := getIdFromRequest(r)
 	if err != nil {

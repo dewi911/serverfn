@@ -1,17 +1,23 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
 	_ "github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
+	"os/signal"
+	_ "serverfn/docs"
 	"serverfn/internal/config"
 	"serverfn/internal/repository/psql"
 	"serverfn/internal/service"
 	"serverfn/internal/taskmanager"
 	"serverfn/internal/transport/rest"
 	"serverfn/pkg/database"
+	"syscall"
+	"time"
 )
 
 func init() {
@@ -25,11 +31,12 @@ const (
 	CONFIG_FILE = "main"
 )
 
+// @title Server API
+// @version 1.0
+// @description API server with task management.
+// @host localhost:8080
+// @BasePath /
 func main() {
-	//cfg, err := config.Load()
-	//if err != nil {
-	//	logrus.Fatalf("Failed to load configuration: %v", err)
-	//}
 	cfg, err := config.New(CONFIG_DIR, CONFIG_FILE)
 	if err != nil {
 		log.Fatal(err)
@@ -53,14 +60,8 @@ func main() {
 	tm := taskmanager.NewTaskManager(cfg.QueueCapacity, cfg.WorkerPoolSize, repo.GetTaskRepository(), log.New())
 	services := service.NewServices(repo, tm)
 	handler := rest.NewHandler(services)
-	
-	//repo := psql.NewRepositories(db)
-	//services := service.NewServices(repo)
-	//handler := rest.NewHandler(services)
-	//taskRepo := psql.NewTasksRepository(db)
-	//taskService := service.NewTask(taskRepo)
 
-	//handler := rest.NewHandler(taskService)
+	//start manager
 	go tm.Start()
 
 	srv := &http.Server{
@@ -68,47 +69,42 @@ func main() {
 		Handler: handler.InitRouter(),
 	}
 
-	log.Info("Listening on port 8080")
+	go func() {
+		log.Infof("Starting server on %d", cfg.Server.Port)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Could not listen on %s: %v", cfg.Server, cfg.Server.Port)
+		}
+	}()
 
-	if err := srv.ListenAndServe(); err != nil {
-		log.Fatal(err)
-	}
-	//taskQueue := make(chan *task.Task, cfg.QueueSize)
-	//taskManager := task.NewManagerImpl(taskQueue, cfg.WorkerPoolSize, logger)
-	//server := api.NewServer(taskManager, logger)
-	//
-	//go taskManager.Start()
-	//
-	//srv := &http.Server{
-	//	Addr:    cfg.ServerAddress,
-	//	Handler: server.Router(),
-	//}
-	//
-	//go func() {
-	//	logger.Infof("Starting server on %s", cfg.ServerAddress)
-	//	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-	//		logger.Fatalf("Could not listen on %s: %v", cfg.ServerAddress, err)
-	//	}
-	//}()
-	//
-	//gracefulShutdown(srv, taskManager, logger)
+	gracefulShutdown(srv, tm, db, log.New())
+	log.Info("Main: exiting")
 }
 
-//func gracefulShutdown(srv *http.Server, tm task.Manager, logger *logrus.Logger) {
-//	stop := make(chan os.Signal, 1)
-//	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
-//	<-stop
-//
-//	logger.Info("Shutting down server...")
-//
-//	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-//	defer cancel()
-//
-//	if err := srv.Shutdown(ctx); err != nil {
-//		logger.Fatalf("Server forced to shutdown: %v", err)
-//	}
-//
-//	tm.Stop()
-//
-//	logger.Info("Server exiting")
-//}
+func gracefulShutdown(srv *http.Server, tm taskmanager.TaskManager, db *sql.DB, logger *log.Logger) {
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+	<-stop
+
+	logger.Info("Initiating graceful shutdown...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	logger.Info("Shutting down HTTP server...")
+	if err := srv.Shutdown(ctx); err != nil {
+		logger.Fatalf("Server forced to shutdown: %v", err)
+	}
+	logger.Info("HTTP server stopped")
+
+	logger.Info("Stopping task manager...")
+	tm.Stop()
+	logger.Info("Task manager stopped")
+
+	logger.Info("Closing database connection...")
+	if err := db.Close(); err != nil {
+		logger.Fatalf("Error closing database connection: %v", err)
+	}
+	logger.Info("Database connection closed")
+
+	logger.Info("Graceful shutdown completed")
+}
