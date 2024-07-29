@@ -48,8 +48,6 @@ type TaskCreateInput struct {
 type TaskUpdateInput struct {
 	Status TaskStatus `json:"status" validate:"required"`
 }
-type TaskInput struct {
-}
 
 type Headers struct {
 	Authentication  string              `json:"authentication"`

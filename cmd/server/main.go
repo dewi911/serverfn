@@ -50,15 +50,10 @@ func main() {
 
 	//init deps
 	repo := psql.NewRepositories(db)
-	tm := taskmanager.NewTaskManager(
-		cfg.QueueCapacity,
-		cfg.WorkerPoolSize,
-		repo.GetTaskRepository(),
-		log.New(),
-	)
+	tm := taskmanager.NewTaskManager(cfg.QueueCapacity, cfg.WorkerPoolSize, repo.GetTaskRepository(), log.New())
 	services := service.NewServices(repo, tm)
 	handler := rest.NewHandler(services)
-
+	
 	//repo := psql.NewRepositories(db)
 	//services := service.NewServices(repo)
 	//handler := rest.NewHandler(services)

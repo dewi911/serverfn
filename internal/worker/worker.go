@@ -35,7 +35,9 @@ func (w *Worker) Start() {
 			return
 		default:
 			task := w.taskQueue.Dequeue()
-			w.processTask(task)
+			if task != nil {
+				w.processTask(task)
+			}
 		}
 	}
 }
@@ -45,7 +47,7 @@ func (w *Worker) Stop() {
 }
 
 func (w *Worker) processTask(task *domain.Task) {
-	task.TaskStatus = domain.TaskStatusInProcess
+	w.logger.WithField("taskID", task.ID).Info("Processing task")
 
 	client := &http.Client{
 		Timeout: time.Second * 30,
@@ -54,9 +56,7 @@ func (w *Worker) processTask(task *domain.Task) {
 	req, err := http.NewRequest(task.Method, task.URL, nil)
 	if err != nil {
 		w.logger.WithError(err).Error("Error creating request")
-		task.TaskStatus = domain.TaskStatusError
-		task.Headers.Error = err.Error()
-		w.updateTaskStatus(task)
+		w.updateTaskStatus(task, domain.TaskStatusError)
 		return
 	}
 
@@ -67,9 +67,7 @@ func (w *Worker) processTask(task *domain.Task) {
 	resp, err := client.Do(req)
 	if err != nil {
 		w.logger.WithError(err).Error("Error executing request")
-		task.TaskStatus = domain.TaskStatusError
-		task.Headers.Error = err.Error()
-		w.updateTaskStatus(task)
+		w.updateTaskStatus(task, domain.TaskStatusError)
 		return
 	}
 	defer resp.Body.Close()
@@ -83,13 +81,17 @@ func (w *Worker) processTask(task *domain.Task) {
 		w.logger.WithError(err).Warn("Error reading response body")
 	}
 
-	task.TaskStatus = domain.TaskStatusDone
-	w.updateTaskStatus(task)
+	w.updateTaskStatus(task, domain.TaskStatusDone)
 }
 
-func (w *Worker) updateTaskStatus(task *domain.Task) {
-	err := w.taskRepo.Update(context.Background(), task.ID, domain.TaskUpdateInput{Status: task.TaskStatus})
+func (w *Worker) updateTaskStatus(task *domain.Task, status domain.TaskStatus) {
+	err := w.taskRepo.Update(context.Background(), task.ID, domain.TaskUpdateInput{Status: status})
 	if err != nil {
 		w.logger.WithError(err).Error("Failed to update task status in database")
+	} else {
+		w.logger.WithFields(logrus.Fields{
+			"taskID": task.ID,
+			"status": status,
+		}).Info("Task status updated")
 	}
 }

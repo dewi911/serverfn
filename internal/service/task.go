@@ -21,7 +21,7 @@ func NewTasksService(repo domain.TaskRepository, tm taskmanager.TaskManager) *Ta
 func (s *TasksService) CreateTask(ctx context.Context, inp domain.Task) (domain.TaskResponse, error) {
 	task := &domain.Task{
 		Method:     inp.Method,
-		TaskStatus: inp.TaskStatus,
+		TaskStatus: domain.TaskStatusNew,
 		URL:        inp.URL,
 		Headers:    inp.Headers,
 	}

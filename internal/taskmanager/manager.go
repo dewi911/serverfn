@@ -44,6 +44,7 @@ func (tm *taskManager) Start() {
 			worker.Start()
 		}(w)
 	}
+	tm.logger.Info("Task manager started")
 }
 
 func (tm *taskManager) Stop() {
@@ -57,4 +58,5 @@ func (tm *taskManager) Stop() {
 
 func (tm *taskManager) CreateTask(task *domain.Task) {
 	tm.taskQueue.Enqueue(task)
+	tm.logger.WithField("taskID", task.ID).Info("Task added to queue")
 }
