@@ -5,6 +5,8 @@ import (
 	"serverfn/internal/taskmanager"
 )
 
+//go:generate mockgen -source=service.go -destination=mocks/mock.go
+
 type Repositories interface {
 	GetTaskRepository() domain.TaskRepository
 }

@@ -2,198 +2,287 @@ package service
 
 import (
 	"context"
-	"reflect"
+	"errors"
 	"serverfn/internal/domain"
-	"serverfn/internal/taskmanager"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
-func TestNewTasksService(t *testing.T) {
+type MockTaskRepository struct {
+	mock.Mock
+}
 
-	type args struct {
-		repo domain.TaskRepository
-		tm   taskmanager.TaskManager
-	}
+func (m *MockTaskRepository) Create(ctx context.Context, task domain.Task) (int64, error) {
+	args := m.Called(ctx, task)
+	return args.Get(0).(int64), args.Error(1)
+}
+
+func (m *MockTaskRepository) GetByID(ctx context.Context, id int64) (domain.Task, error) {
+	args := m.Called(ctx, id)
+	return args.Get(0).(domain.Task), args.Error(1)
+}
+
+func (m *MockTaskRepository) GetAll(ctx context.Context) ([]domain.Task, error) {
+	args := m.Called(ctx)
+	return args.Get(0).([]domain.Task), args.Error(1)
+}
+
+func (m *MockTaskRepository) Delete(ctx context.Context, id int64) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockTaskRepository) Update(ctx context.Context, id int64, task domain.TaskUpdateInput) error {
+	args := m.Called(ctx, id, task)
+	return args.Error(0)
+}
+
+type MockTaskManager struct {
+	mock.Mock
+}
+
+func (m *MockTaskManager) CreateTask(task *domain.Task) {
+	m.Called(task)
+}
+
+func (m *MockTaskManager) Start() {
+	m.Called()
+}
+func (m *MockTaskManager) Stop() {
+	m.Called()
+}
+
+func TestCreateTask(t *testing.T) {
+	mockRepo := new(MockTaskRepository)
+	mockManager := new(MockTaskManager)
+	service := NewTasksService(mockRepo, mockManager)
+
 	tests := []struct {
-		name string
-		args args
-		want *TasksService
+		name          string
+		input         domain.Task
+		expectedID    int64
+		expectedError error
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Successful creation",
+			input: domain.Task{
+				Method: "GET",
+				URL:    "http://example.com",
+			},
+			expectedID:    1,
+			expectedError: nil,
+		},
+		{
+			name: "Failed creation",
+			input: domain.Task{
+				Method: "POST",
+				URL:    "http://example.com/post",
+			},
+			expectedID:    0,
+			expectedError: errors.New("database error"),
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewTasksService(tt.args.repo, tt.args.tm); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewTasksService() = %v, want %v", got, tt.want)
+			mockRepo.On("Create", mock.Anything, mock.AnythingOfType("domain.Task")).Return(tt.expectedID, tt.expectedError).Once()
+			if tt.expectedError == nil {
+				mockManager.On("CreateTask", mock.AnythingOfType("*domain.Task")).Once()
 			}
+
+			result, err := service.CreateTask(context.Background(), tt.input)
+
+			if tt.expectedError != nil {
+				assert.Error(t, err)
+				assert.Equal(t, tt.expectedError, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, domain.TaskResponse{ID: tt.expectedID}, result)
+			}
+
+			mockRepo.AssertExpectations(t)
+			mockManager.AssertExpectations(t)
 		})
 	}
 }
 
-func TestTasksService_CreateTask(t *testing.T) {
-	type fields struct {
-		repo        domain.TaskRepository
-		taskManager taskmanager.TaskManager
-	}
-	type args struct {
-		ctx context.Context
-		inp domain.Task
-	}
+func TestGetTask(t *testing.T) {
+	mockRepo := new(MockTaskRepository)
+	mockManager := new(MockTaskManager)
+	service := NewTasksService(mockRepo, mockManager)
+
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    domain.TaskResponse
-		wantErr bool
+		name          string
+		taskID        int64
+		expectedTask  domain.Task
+		expectedError error
 	}{
-		// TODO: Add test cases.
+		{
+			name:   "Successful retrieval",
+			taskID: 1,
+			expectedTask: domain.Task{
+				ID:     1,
+				Method: "GET",
+				URL:    "http://example.com",
+			},
+			expectedError: nil,
+		},
+		{
+			name:          "Failed retrieval",
+			taskID:        2,
+			expectedTask:  domain.Task{},
+			expectedError: errors.New("task not found"),
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := &TasksService{
-				repo:        tt.fields.repo,
-				taskManager: tt.fields.taskManager,
+			mockRepo.On("GetByID", mock.Anything, tt.taskID).Return(tt.expectedTask, tt.expectedError).Once()
+
+			result, err := service.GetTask(context.Background(), tt.taskID)
+
+			if tt.expectedError != nil {
+				assert.Error(t, err)
+				assert.Equal(t, tt.expectedError, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expectedTask, result)
 			}
-			got, err := s.CreateTask(tt.args.ctx, tt.args.inp)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("CreateTask() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("CreateTask() got = %v, want %v", got, tt.want)
-			}
+
+			mockRepo.AssertExpectations(t)
 		})
 	}
 }
 
-func TestTasksService_GetAllTask(t *testing.T) {
-	type fields struct {
-		repo        domain.TaskRepository
-		taskManager taskmanager.TaskManager
-	}
-	type args struct {
-		ctx context.Context
-	}
+func TestGetAllTask(t *testing.T) {
+	mockRepo := new(MockTaskRepository)
+	mockManager := new(MockTaskManager)
+	service := NewTasksService(mockRepo, mockManager)
+
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    []domain.Task
-		wantErr bool
+		name          string
+		expectedTasks []domain.Task
+		expectedError error
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Successful retrieval",
+			expectedTasks: []domain.Task{
+				{ID: 1, Method: "GET", URL: "http://example.com"},
+				{ID: 2, Method: "POST", URL: "http://example.com/post"},
+			},
+			expectedError: nil,
+		},
+		{
+			name:          "Failed retrieval",
+			expectedTasks: nil,
+			expectedError: errors.New("database error"),
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := &TasksService{
-				repo:        tt.fields.repo,
-				taskManager: tt.fields.taskManager,
+			mockRepo.On("GetAll", mock.Anything).Return(tt.expectedTasks, tt.expectedError).Once()
+
+			result, err := service.GetAllTask(context.Background())
+
+			if tt.expectedError != nil {
+				assert.Error(t, err)
+				assert.Equal(t, tt.expectedError, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expectedTasks, result)
 			}
-			got, err := s.GetAllTask(tt.args.ctx)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetAllTask() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetAllTask() got = %v, want %v", got, tt.want)
-			}
+
+			mockRepo.AssertExpectations(t)
 		})
 	}
 }
 
-func TestTasksService_GetTask(t *testing.T) {
-	type fields struct {
-		repo        domain.TaskRepository
-		taskManager taskmanager.TaskManager
-	}
-	type args struct {
-		ctx context.Context
-		id  int64
-	}
+func TestRemoveTask(t *testing.T) {
+	mockRepo := new(MockTaskRepository)
+	mockManager := new(MockTaskManager)
+	service := NewTasksService(mockRepo, mockManager)
+
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    domain.Task
-		wantErr bool
+		name          string
+		taskID        int64
+		expectedError error
 	}{
-		// TODO: Add test cases.
+		{
+			name:          "Successful removal",
+			taskID:        1,
+			expectedError: nil,
+		},
+		{
+			name:          "Failed removal",
+			taskID:        2,
+			expectedError: errors.New("task not found"),
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := &TasksService{
-				repo:        tt.fields.repo,
-				taskManager: tt.fields.taskManager,
+			mockRepo.On("Delete", mock.Anything, tt.taskID).Return(tt.expectedError).Once()
+
+			err := service.RemoveTask(context.Background(), tt.taskID)
+
+			if tt.expectedError != nil {
+				assert.Error(t, err)
+				assert.Equal(t, tt.expectedError, err)
+			} else {
+				assert.NoError(t, err)
 			}
-			got, err := s.GetTask(tt.args.ctx, tt.args.id)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetTask() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetTask() got = %v, want %v", got, tt.want)
-			}
+
+			mockRepo.AssertExpectations(t)
 		})
 	}
 }
 
-func TestTasksService_RemoveTask(t *testing.T) {
-	type fields struct {
-		repo        domain.TaskRepository
-		taskManager taskmanager.TaskManager
-	}
-	type args struct {
-		ctx context.Context
-		id  int64
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := &TasksService{
-				repo:        tt.fields.repo,
-				taskManager: tt.fields.taskManager,
-			}
-			if err := s.RemoveTask(tt.args.ctx, tt.args.id); (err != nil) != tt.wantErr {
-				t.Errorf("RemoveTask() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
+func TestUpdateTask(t *testing.T) {
+	mockRepo := new(MockTaskRepository)
+	mockManager := new(MockTaskManager)
+	service := NewTasksService(mockRepo, mockManager)
 
-func TestTasksService_UpdateTask(t *testing.T) {
-	type fields struct {
-		repo        domain.TaskRepository
-		taskManager taskmanager.TaskManager
-	}
-	type args struct {
-		ctx  context.Context
-		id   int64
-		task domain.TaskUpdateInput
-	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
+		name          string
+		taskID        int64
+		updateInput   domain.TaskUpdateInput
+		expectedError error
 	}{
-		// TODO: Add test cases.
+		{
+			name:   "Successful update",
+			taskID: 1,
+			updateInput: domain.TaskUpdateInput{
+				Status: domain.TaskStatusDone,
+			},
+			expectedError: nil,
+		},
+		{
+			name:   "Failed update",
+			taskID: 2,
+			updateInput: domain.TaskUpdateInput{
+				Status: domain.TaskStatusError,
+			},
+			expectedError: errors.New("task not found"),
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := &TasksService{
-				repo:        tt.fields.repo,
-				taskManager: tt.fields.taskManager,
+			mockRepo.On("Update", mock.Anything, tt.taskID, tt.updateInput).Return(tt.expectedError).Once()
+
+			err := service.UpdateTask(context.Background(), tt.taskID, tt.updateInput)
+
+			if tt.expectedError != nil {
+				assert.Error(t, err)
+				assert.Equal(t, tt.expectedError, err)
+			} else {
+				assert.NoError(t, err)
 			}
-			if err := s.UpdateTask(tt.args.ctx, tt.args.id, tt.args.task); (err != nil) != tt.wantErr {
-				t.Errorf("UpdateTask() error = %v, wantErr %v", err, tt.wantErr)
-			}
+
+			mockRepo.AssertExpectations(t)
 		})
 	}
 }
