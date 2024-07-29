@@ -1,21 +1,20 @@
-package task
-
+//package worker
 //
 //import (
+//	log "github.com/sirupsen/logrus"
 //	"io"
 //	"net/http"
+//	"serverfn/internal/domain"
 //	"time"
-//
-//	"github.com/sirupsen/logrus"
 //)
 //
 //type Worker struct {
-//	taskQueue <-chan *Task
+//	taskQueue <-chan *domain.Task
 //	quit      chan bool
-//	logger    *logrus.Logger
+//	logger    *log.Logger
 //}
 //
-//func NewWorker(taskQueue <-chan *Task, logger *logrus.Logger) *Worker {
+//func NewWorker(taskQueue <-chan *domain.Task, logger *log.Logger) *Worker {
 //	return &Worker{
 //		taskQueue: taskQueue,
 //		quit:      make(chan bool),
@@ -38,8 +37,8 @@ package task
 //	w.quit <- true
 //}
 //
-//func (w *Worker) processTask(task *Task) {
-//	task.Status = TaskStatusInProcess
+//func (w *Worker) processTask(task *domain.Task) {
+//	task.Status = domain.TaskStatusInProcess
 //
 //	client := &http.Client{
 //		Timeout: time.Second * 30,
@@ -48,7 +47,7 @@ package task
 //	req, err := http.NewRequest(task.Method, task.URL, nil)
 //	if err != nil {
 //		w.logger.WithError(err).Error("Error creating request")
-//		task.Status = TaskStatusError
+//		task.Status = domain.TaskStatusError
 //		task.Error = err.Error()
 //		return
 //	}
@@ -60,7 +59,7 @@ package task
 //	resp, err := client.Do(req)
 //	if err != nil {
 //		w.logger.WithError(err).Error("Error executing request")
-//		task.Status = TaskStatusError
+//		task.Status = domain.TaskStatusError
 //		task.Error = err.Error()
 //		return
 //	}
@@ -75,5 +74,5 @@ package task
 //		w.logger.WithError(err).Warn("Error reading response body")
 //	}
 //
-//	task.Status = TaskStatusDone
+//	task.Status = domain.TaskStatusDone
 //}
