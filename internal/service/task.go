@@ -3,48 +3,52 @@ package service
 import (
 	"context"
 	"serverfn/internal/domain"
+	"serverfn/internal/taskmanager"
 )
 
 type TasksService struct {
-	repo domain.TaskRepository
+	repo        domain.TaskRepository
+	taskManager taskmanager.TaskManager
 }
 
-func NewTasksService(repo Repositories) *TasksService {
-	return &TasksService{repo: repo.GetTaskRepository()}
+func NewTasksService(repo domain.TaskRepository, tm taskmanager.TaskManager) *TasksService {
+	return &TasksService{
+		repo:        repo,
+		taskManager: tm,
+	}
 }
 
-func (t *TasksService) CreateTask(ctx context.Context, inp domain.Task) (domain.TaskResponse, error) {
-	task := domain.Task{
+func (s *TasksService) CreateTask(ctx context.Context, inp domain.Task) (domain.TaskResponse, error) {
+	task := &domain.Task{
 		Method:     inp.Method,
 		TaskStatus: inp.TaskStatus,
 		URL:        inp.URL,
 		Headers:    inp.Headers,
 	}
 
-	id, err := t.repo.Create(ctx, task)
+	id, err := s.repo.Create(ctx, *task)
 	if err != nil {
 		return domain.TaskResponse{}, err
 	}
 
-	response := domain.TaskResponse{
-		ID: id,
-	}
+	task.ID = id
+	s.taskManager.CreateTask(task)
 
-	return response, err
+	return domain.TaskResponse{ID: id}, nil
 }
 
-func (t *TasksService) GetTask(ctx context.Context, id int64) (domain.Task, error) {
-	return t.repo.GetByID(ctx, id)
+func (s *TasksService) GetTask(ctx context.Context, id int64) (domain.Task, error) {
+	return s.repo.GetByID(ctx, id)
 }
 
-func (t *TasksService) GetAllTask(ctx context.Context) ([]domain.Task, error) {
-	return t.repo.GetAll(ctx)
+func (s *TasksService) GetAllTask(ctx context.Context) ([]domain.Task, error) {
+	return s.repo.GetAll(ctx)
 }
 
-func (t *TasksService) RemoveTask(ctx context.Context, id int64) error {
-	return t.repo.Delete(ctx, id)
+func (s *TasksService) RemoveTask(ctx context.Context, id int64) error {
+	return s.repo.Delete(ctx, id)
 }
 
-func (t *TasksService) UpdateTask(ctx context.Context, id int64, task domain.TaskUpdateInput) error {
-	return t.repo.Update(ctx, id, task)
+func (s *TasksService) UpdateTask(ctx context.Context, id int64, task domain.TaskUpdateInput) error {
+	return s.repo.Update(ctx, id, task)
 }

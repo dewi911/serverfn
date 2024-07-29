@@ -9,6 +9,7 @@ import (
 	"serverfn/internal/config"
 	"serverfn/internal/repository/psql"
 	"serverfn/internal/service"
+	"serverfn/internal/taskmanager"
 	"serverfn/internal/transport/rest"
 	"serverfn/pkg/database"
 )
@@ -29,18 +30,18 @@ func main() {
 	//if err != nil {
 	//	logrus.Fatalf("Failed to load configuration: %v", err)
 	//}
-	cfg1, err := config.New(CONFIG_DIR, CONFIG_FILE)
+	cfg, err := config.New(CONFIG_DIR, CONFIG_FILE)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	db, err := database.NewPostgresConnection(database.ConnectionInfo{
-		Host:     cfg1.DB.Host,
-		Port:     cfg1.DB.Port,
-		Username: cfg1.DB.Username,
-		DBName:   cfg1.DB.Name,
-		SSLMode:  cfg1.DB.SSLMode,
-		Password: cfg1.DB.Password,
+		Host:     cfg.DB.Host,
+		Port:     cfg.DB.Port,
+		Username: cfg.DB.Username,
+		DBName:   cfg.DB.Name,
+		SSLMode:  cfg.DB.SSLMode,
+		Password: cfg.DB.Password,
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -48,17 +49,27 @@ func main() {
 	defer db.Close()
 
 	//init deps
-
 	repo := psql.NewRepositories(db)
-	services := service.NewServices(repo)
+	tm := taskmanager.NewTaskManager(
+		cfg.QueueCapacity,
+		cfg.WorkerPoolSize,
+		repo.GetTaskRepository(),
+		log.New(),
+	)
+	services := service.NewServices(repo, tm)
 	handler := rest.NewHandler(services)
+
+	//repo := psql.NewRepositories(db)
+	//services := service.NewServices(repo)
+	//handler := rest.NewHandler(services)
 	//taskRepo := psql.NewTasksRepository(db)
 	//taskService := service.NewTask(taskRepo)
 
 	//handler := rest.NewHandler(taskService)
+	go tm.Start()
 
 	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%d", cfg1.Server.Port),
+		Addr:    fmt.Sprintf(":%d", cfg.Server.Port),
 		Handler: handler.InitRouter(),
 	}
 

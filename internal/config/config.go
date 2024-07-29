@@ -7,18 +7,12 @@ import (
 )
 
 type Config struct {
-	ServerAddress  string
-	WorkerPoolSize int
-	QueueSize      int
-}
-
-type Config1 struct {
 	DB     Postgres
 	Server struct {
 		Port int `mapstructure:"port"`
 	} `mapstructure:"server"`
-	WorkerPoolSize int
-	QueueSize      int
+	WorkerPoolSize int `mapstructure:"worker_pool_size"`
+	QueueCapacity  int `mapstructure:"queue_capacity"`
 }
 
 type Postgres struct {
@@ -30,8 +24,8 @@ type Postgres struct {
 	Password string
 }
 
-func New(folder, filename string) (*Config1, error) {
-	cfg := new(Config1)
+func New(folder, filename string) (*Config, error) {
+	cfg := new(Config)
 
 	viper.AddConfigPath(folder)
 	viper.SetConfigName(filename)
@@ -50,18 +44,4 @@ func New(folder, filename string) (*Config1, error) {
 	}
 
 	return cfg, nil
-}
-
-func Load() (*Config, error) {
-	viper.SetDefault("SERVER_ADDRESS", ":8080")
-	viper.SetDefault("WORKER_POOL_SIZE", 10)
-	viper.SetDefault("QUEUE_SIZE", 10000)
-
-	viper.AutomaticEnv()
-
-	return &Config{
-		ServerAddress:  viper.GetString("SERVER_ADDRESS"),
-		WorkerPoolSize: viper.GetInt("WORKER_POOL_SIZE"),
-		QueueSize:      viper.GetInt("QUEUE_SIZE"),
-	}, nil
 }
