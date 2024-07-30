@@ -19,6 +19,9 @@ WORKDIR /root/
 COPY --from=builder /app/main .
 COPY --from=builder /app/configs ./configs
 
+RUN chmod +x /root/main
+
 EXPOSE 8080
+
 
 CMD ["./main"]
