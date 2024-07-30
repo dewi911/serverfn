@@ -2,11 +2,11 @@ package taskmanager
 
 import (
 	"context"
+	"github.com/dewi911/serverfn/internal/domain"
+	"github.com/dewi911/serverfn/internal/worker"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"serverfn/internal/domain"
-	"serverfn/internal/worker"
 	"sync"
 	"testing"
 )

@@ -1,4 +1,4 @@
-module serverfn
+module github.com/dewi911/serverfn
 
 go 1.22.3
 

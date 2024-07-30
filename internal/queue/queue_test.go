@@ -1,7 +1,7 @@
 package queue
 
 import (
-	"serverfn/internal/domain"
+	"github.com/dewi911/serverfn/internal/domain"
 	"testing"
 	"time"
 
@@ -62,6 +62,6 @@ func TestEnqueueAfterClose(t *testing.T) {
 		Method: "GET",
 		URL:    "http://example.com",
 	}
-	
+
 	q.Enqueue(task)
 }

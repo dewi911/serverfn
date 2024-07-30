@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"serverfn/internal/domain"
+	"github.com/dewi911/serverfn/internal/domain"
 )
 
 type TasksRepository struct {

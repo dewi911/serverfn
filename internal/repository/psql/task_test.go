@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"serverfn/internal/domain"
+	"github.com/dewi911/serverfn/internal/domain"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"

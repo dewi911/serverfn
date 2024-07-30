@@ -6,7 +6,7 @@ package mock_service
 
 import (
 	reflect "reflect"
-	domain "serverfn/internal/domain"
+	domain "github.com/dewi911/serverfn/internal/domain"
 
 	gomock "github.com/golang/mock/gomock"
 )

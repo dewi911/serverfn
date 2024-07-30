@@ -2,7 +2,7 @@ package psql
 
 import (
 	"database/sql"
-	"serverfn/internal/domain"
+	"github.com/dewi911/serverfn/internal/domain"
 )
 
 type Repositories struct {

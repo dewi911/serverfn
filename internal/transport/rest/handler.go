@@ -2,11 +2,11 @@ package rest
 
 import (
 	"errors"
+	_ "github.com/dewi911/serverfn/docs"
+	"github.com/dewi911/serverfn/internal/domain"
 	"github.com/gorilla/mux"
 	httpSwagger "github.com/swaggo/http-swagger"
 	"net/http"
-	_ "serverfn/docs"
-	"serverfn/internal/domain"
 	"strconv"
 )
 

@@ -1,10 +1,10 @@
 package taskmanager
 
 import (
+	"github.com/dewi911/serverfn/internal/domain"
+	"github.com/dewi911/serverfn/internal/queue"
+	"github.com/dewi911/serverfn/internal/worker"
 	"github.com/sirupsen/logrus"
-	"serverfn/internal/domain"
-	"serverfn/internal/queue"
-	"serverfn/internal/worker"
 	"sync"
 )
 

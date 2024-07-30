@@ -2,10 +2,10 @@ package worker
 
 import (
 	"context"
+	"github.com/dewi911/serverfn/internal/domain"
+	"github.com/dewi911/serverfn/internal/queue"
 	"io"
 	"net/http"
-	"serverfn/internal/domain"
-	"serverfn/internal/queue"
 	"time"
 
 	"github.com/sirupsen/logrus"

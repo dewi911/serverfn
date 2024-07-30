@@ -3,7 +3,7 @@
 package queue
 
 import (
-	"serverfn/internal/domain"
+	"github.com/dewi911/serverfn/internal/domain"
 	"sync"
 )
 

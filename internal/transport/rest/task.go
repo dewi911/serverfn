@@ -2,9 +2,9 @@ package rest
 
 import (
 	"encoding/json"
+	"github.com/dewi911/serverfn/internal/domain"
 	"io"
 	"net/http"
-	"serverfn/internal/domain"
 )
 
 // @Summary Create a new task

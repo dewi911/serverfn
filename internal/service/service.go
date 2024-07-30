@@ -1,8 +1,8 @@
 package service
 
 import (
-	"serverfn/internal/domain"
-	"serverfn/internal/taskmanager"
+	"github.com/dewi911/serverfn/internal/domain"
+	"github.com/dewi911/serverfn/internal/taskmanager"
 )
 
 //go:generate mockgen -source=service.go -destination=mocks/mock.go

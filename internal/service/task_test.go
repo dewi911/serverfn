@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	"errors"
-	"serverfn/internal/domain"
+	"github.com/dewi911/serverfn/internal/domain"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
