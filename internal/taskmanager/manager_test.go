@@ -91,7 +91,7 @@ func TestCreateTask(t *testing.T) {
 	tm.CreateTask(task)
 
 	mockQueue.AssertExpectations(t)
-	
+
 	assert.Contains(t, buf.String(), "Task added to queue")
 	assert.Contains(t, buf.String(), "taskID=1")
 }
