@@ -29,7 +29,7 @@ jobs:
       - name: Generate Swagger
         run: |
           go install github.com/swaggo/swag/cmd/swag@latest
-          swag init -g ./internal/app/app.go
+          swag init -g internal/transport/rest/handler.go
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
