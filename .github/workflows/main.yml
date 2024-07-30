@@ -46,3 +46,9 @@ jobs:
           context: .
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/serverfn:latest
+
+      - name: Start Docker Compose
+        run: docker-compose up -d
+
+      - name: Stop Docker Compose
+        run: docker-compose down

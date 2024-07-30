@@ -51,4 +51,4 @@ clean:
 
 env:
 	@echo "Creating .env file..."
-	@cp .env.example .env
+	@cp .envexample .env
