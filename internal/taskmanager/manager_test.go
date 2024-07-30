@@ -1,6 +1,7 @@
 package taskmanager
 
 import (
+	"bytes"
 	"context"
 	"github.com/dewi911/serverfn/internal/domain"
 	"github.com/dewi911/serverfn/internal/worker"
@@ -69,7 +70,10 @@ func TestNewTaskManager(t *testing.T) {
 
 func TestCreateTask(t *testing.T) {
 	mockQueue := new(MockTaskQueue)
+
+	var buf bytes.Buffer
 	logger := logrus.New()
+	logger.SetOutput(&buf)
 
 	tm := &taskManager{
 		taskQueue: mockQueue,
@@ -87,6 +91,9 @@ func TestCreateTask(t *testing.T) {
 	tm.CreateTask(task)
 
 	mockQueue.AssertExpectations(t)
+	
+	assert.Contains(t, buf.String(), "Task added to queue")
+	assert.Contains(t, buf.String(), "taskID=1")
 }
 
 func TestStop(t *testing.T) {
@@ -111,4 +118,11 @@ func TestStop(t *testing.T) {
 	tm.Stop()
 
 	mockQueue.AssertExpectations(t)
+
+	select {
+	case <-tm.quit:
+		// Канал закрыт, как и ожидалось
+	default:
+		t.Error("quit channel was not closed")
+	}
 }

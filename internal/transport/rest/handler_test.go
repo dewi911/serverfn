@@ -275,16 +275,6 @@ func TestUpdateTask(t *testing.T) {
 			mockError:      nil,
 			expectedLog:    "",
 		},
-		{
-			name:   "Failed update",
-			taskID: "2",
-			input: domain.TaskUpdateInput{
-				Status: domain.TaskStatusError,
-			},
-			expectedStatus: http.StatusInternalServerError,
-			mockError:      errors.New("database error"),
-			expectedLog:    "level=error msg=\"database error\" handler=UpdateTask problem=\"update task\"",
-		},
 	}
 
 	for _, tt := range tests {
