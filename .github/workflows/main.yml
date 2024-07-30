@@ -47,6 +47,13 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/serverfn:latest
 
+
+
+      - name: Create .env file
+        run: |
+          echo "DB_PASSWORD=$DB_PASSWORD" >> .env
+          echo "DB_USERNAME=$DB_USERNAME" >> .env
+          echo "DB_NAME=$DB_NAME" >> .env
       - name: Start Docker Compose
         run: docker-compose up -d
 
