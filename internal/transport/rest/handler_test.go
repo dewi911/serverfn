@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/dewi911/serverfn/internal/domain"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strconv"
 	"testing"
 
@@ -261,6 +263,7 @@ func TestUpdateTask(t *testing.T) {
 		input          domain.TaskUpdateInput
 		expectedStatus int
 		mockError      error
+		expectedLog    string
 	}{
 		{
 			name:   "Successful update",
@@ -270,6 +273,7 @@ func TestUpdateTask(t *testing.T) {
 			},
 			expectedStatus: http.StatusOK,
 			mockError:      nil,
+			expectedLog:    "",
 		},
 		{
 			name:   "Failed update",
@@ -279,11 +283,19 @@ func TestUpdateTask(t *testing.T) {
 			},
 			expectedStatus: http.StatusInternalServerError,
 			mockError:      errors.New("database error"),
+			expectedLog:    "level=error msg=\"database error\" handler=UpdateTask problem=\"update task\"",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Настройка перехвата логов
+			var buf bytes.Buffer
+			logrus.SetOutput(&buf)
+			defer func() {
+				logrus.SetOutput(os.Stderr)
+			}()
+
 			taskID, _ := strconv.ParseInt(tt.taskID, 10, 64)
 
 			mockService.On("UpdateTask", mock.Anything, taskID, tt.input).Return(tt.mockError).Once()
@@ -297,6 +309,13 @@ func TestUpdateTask(t *testing.T) {
 			router.ServeHTTP(rr, req)
 
 			assert.Equal(t, tt.expectedStatus, rr.Code)
+
+			// Проверка лога
+			if tt.expectedLog != "" {
+				assert.Contains(t, buf.String(), tt.expectedLog)
+			} else {
+				assert.Empty(t, buf.String())
+			}
 
 			mockService.AssertExpectations(t)
 		})
