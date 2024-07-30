@@ -1,100 +1,67 @@
 package queue
 
 import (
-	"reflect"
-	"sync"
+	"serverfn/internal/domain"
 	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewTaskQueue(t *testing.T) {
-	type args struct {
-		capacity int
-	}
-	tests := []struct {
-		name string
-		args args
-		want TaskQueue
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := NewTaskQueue(tt.args.capacity); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewTaskQueue() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+	q := NewTaskQueue(10)
+	assert.NotNil(t, q)
+	assert.IsType(t, &taskQueue{}, q)
 }
 
-func Test_taskQueue_Close(t *testing.T) {
-	type fields struct {
-		tasks chan *domain.Task
-		wg    sync.WaitGroup
+func TestEnqueueDequeue(t *testing.T) {
+	q := NewTaskQueue(1)
+
+	task := &domain.Task{
+		ID:     1,
+		Method: "GET",
+		URL:    "http://example.com",
 	}
-	tests := []struct {
-		name   string
-		fields fields
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			q := &taskQueue{
-				tasks: tt.fields.tasks,
-				wg:    tt.fields.wg,
-			}
-			q.Close()
-		})
-	}
+
+	q.Enqueue(task)
+
+	dequeuedTask := q.Dequeue()
+
+	assert.Equal(t, task, dequeuedTask)
 }
 
-func Test_taskQueue_Dequeue(t *testing.T) {
-	type fields struct {
-		tasks chan *domain.Task
-		wg    sync.WaitGroup
+func TestClose(t *testing.T) {
+	q := NewTaskQueue(1)
+
+	task := &domain.Task{
+		ID:     1,
+		Method: "GET",
+		URL:    "http://example.com",
 	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   *domain.Task
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			q := &taskQueue{
-				tasks: tt.fields.tasks,
-				wg:    tt.fields.wg,
-			}
-			if got := q.Dequeue(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Dequeue() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+
+	q.Enqueue(task)
+
+	go func() {
+		time.Sleep(50 * time.Millisecond)
+		q.Close()
+	}()
+
+	_ = q.Dequeue()
+
+	nilTask := q.Dequeue()
+	assert.Nil(t, nilTask)
 }
 
-func Test_taskQueue_Enqueue(t *testing.T) {
-	type fields struct {
-		tasks chan *domain.Task
-		wg    sync.WaitGroup
+func TestEnqueueAfterClose(t *testing.T) {
+	q := NewTaskQueue(1)
+
+	q.Close()
+
+	task := &domain.Task{
+		ID:     1,
+		Method: "GET",
+		URL:    "http://example.com",
 	}
-	type args struct {
-		task *domain.Task
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			q := &taskQueue{
-				tasks: tt.fields.tasks,
-				wg:    tt.fields.wg,
-			}
-			q.Enqueue(tt.args.task)
-		})
-	}
+	
+	q.Enqueue(task)
 }

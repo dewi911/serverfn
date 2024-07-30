@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS tasks
+(
+    id BIGSERIAL PRIMARY KEY,
+    method VARCHAR(50) NOT NULL,
+    task_status TEXT NOT NULL,
+    url TEXT NOT NULL,
+    headers JSONB NOT NULL
+);

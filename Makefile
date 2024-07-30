@@ -1,33 +1,54 @@
-.PHONY: build test run docker-build docker-run
+.PHONY: build run test docker-build docker-compose-up docker-compose-down swag-init migrate-up migrate-down
 
 
-BINARY_NAME=server
-DOCKER_IMAGE_NAME=task-service
+GOBASE=$(shell pwd)
+GOBIN=$(GOBASE)/bin
+GOFILES=$(wildcard *.go)
+
+
+BINARY_NAME=task_manager
 
 build:
-	go build -o ./bin/$(BINARY_NAME) ./cmd/server
+	@echo "Building..."
+	@go build -o $(GOBIN)/$(BINARY_NAME) $(GOFILES)
+
+run: build
+	@echo "Running..."
+	@$(GOBIN)/$(BINARY_NAME)
 
 test:
-	go test -v ./...
-
-run:
-	go run ./cmd/server/main.go
+	@echo "Testing..."
+	@go test -v ./...
 
 docker-build:
-	docker build -t $(DOCKER_IMAGE_NAME) .
+	@echo "Building Docker image..."
+	@docker build -t $(BINARY_NAME) .
 
-docker-run:
-	docker run -p 8080:8080 $(DOCKER_IMAGE_NAME)
+docker-compose-up:
+	@echo "Starting Docker services..."
+	@docker-compose up -d
+
+docker-compose-down:
+	@echo "Stopping Docker services..."
+	@docker-compose down
+
+swag-init:
+	@echo "Initializing Swagger docs..."
+	@swag init -g ./internal/app/app.go
+
+migrate-up:
+	@echo "Running database migrations..."
+	@docker-compose run --rm migrate -path /migrations -database "postgres://${DB_USERNAME}:${DB_PASSWORD}@postgres:5432/${DB_NAME}?sslmode=disable" up
+
+migrate-down:
+	@echo "Reverting database migrations..."
+	@docker-compose run --rm migrate -path /migrations -database "postgres://${DB_USERNAME}:${DB_PASSWORD}@postgres:5432/${DB_NAME}?sslmode=disable" down
 
 clean:
-	go clean
-	rm -f ./bin/$(BINARY_NAME)
+	@echo "Cleaning..."
+	@go clean
+	@rm -f $(GOBIN)/$(BINARY_NAME)
 
-deps:
-	go mod download
-
-lint:
-	golangci-lint run
-
-
-all: deps build test
+env:
+	@echo "Creating .env file..."
+	@cp .env.example .env

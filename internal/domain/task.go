@@ -9,15 +9,12 @@ func init() {
 	validate = validator.New()
 }
 
-type keyType string
 type TaskStatus string
 
 const (
-	TaskStatusNew       TaskStatus = "new"
-	TaskStatusInProcess TaskStatus = "in_process"
-	TaskStatusDone      TaskStatus = "done"
-	TaskStatusError     TaskStatus = "error"
-	TaskId              keyType    = "task_id"
+	TaskStatusNew   TaskStatus = "new"
+	TaskStatusDone  TaskStatus = "done"
+	TaskStatusError TaskStatus = "error"
 )
 
 var validate *validator.Validate

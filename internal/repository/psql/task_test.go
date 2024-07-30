@@ -3,34 +3,15 @@ package psql
 import (
 	"context"
 	"database/sql"
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/stretchr/testify/assert"
-	"reflect"
+	"errors"
 	"serverfn/internal/domain"
 	"testing"
+
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestNewTasksRepository(t *testing.T) {
-	type args struct {
-		db *sql.DB
-	}
-	tests := []struct {
-		name string
-		args args
-		want *TasksRepository
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := NewTasksRepository(tt.args.db); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewTasksRepository() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestTasksRepository_Create(t *testing.T) {
+func TestCreate(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
@@ -39,84 +20,59 @@ func TestTasksRepository_Create(t *testing.T) {
 
 	repo := NewTasksRepository(db)
 
-	task := domain.Task{
-		Method: "GET",
-		URL:    "http://example.com",
-	}
-
-	mock.ExpectQuery("INSERT INTO tasks").
-		WithArgs(task.Method, task.TaskStatus, task.URL, sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
-
-	id, err := repo.Create(context.Background(), task)
-
-	assert.NoError(t, err)
-	assert.Equal(t, int64(1), id)
-	assert.NoError(t, mock.ExpectationsWereMet())
-}
-
-func TestTasksRepository_Delete(t *testing.T) {
-	type fields struct {
-		db *sql.DB
-	}
-	type args struct {
-		ctx context.Context
-		id  int64
-	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
+		name          string
+		task          domain.Task
+		expectedID    int64
+		expectedError error
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Successful creation",
+			task: domain.Task{
+				Method: "GET",
+				URL:    "http://example.com",
+				Headers: domain.Headers{
+					Authentication: "Bearer token",
+				},
+			},
+			expectedID:    1,
+			expectedError: nil,
+		},
+		{
+			name: "Failed creation",
+			task: domain.Task{
+				Method: "POST",
+				URL:    "http://example.com/post",
+			},
+			expectedID:    0,
+			expectedError: errors.New("database error"),
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := &TasksRepository{
-				db: tt.fields.db,
+			if tt.expectedError == nil {
+				rows := sqlmock.NewRows([]string{"id"}).AddRow(tt.expectedID)
+				mock.ExpectQuery("INSERT INTO tasks").WithArgs(tt.task.Method, tt.task.TaskStatus, tt.task.URL, sqlmock.AnyArg()).WillReturnRows(rows)
+			} else {
+				mock.ExpectQuery("INSERT INTO tasks").WithArgs(tt.task.Method, tt.task.TaskStatus, tt.task.URL, sqlmock.AnyArg()).WillReturnError(tt.expectedError)
 			}
-			if err := r.Delete(tt.args.ctx, tt.args.id); (err != nil) != tt.wantErr {
-				t.Errorf("Delete() error = %v, wantErr %v", err, tt.wantErr)
+
+			id, err := repo.Create(context.Background(), tt.task)
+
+			if tt.expectedError != nil {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expectedID, id)
 			}
+
+			assert.NoError(t, mock.ExpectationsWereMet())
 		})
 	}
 }
 
-func TestTasksRepository_GetAll(t *testing.T) {
-	type fields struct {
-		db *sql.DB
-	}
-	type args struct {
-		ctx context.Context
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    []domain.Task
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			r := &TasksRepository{
-				db: tt.fields.db,
-			}
-			got, err := r.GetAll(tt.args.ctx)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetAll() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetAll() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestTasksRepository_GetByID(t *testing.T) {
+func TestGetByID(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
@@ -125,53 +81,152 @@ func TestTasksRepository_GetByID(t *testing.T) {
 
 	repo := NewTasksRepository(db)
 
-	expectedTask := domain.Task{
-		ID:     1,
-		Method: "GET",
-		URL:    "http://example.com",
-	}
-
-	rows := sqlmock.NewRows([]string{"id", "method", "task_status", "url", "headers"}).
-		AddRow(expectedTask.ID, expectedTask.Method, expectedTask.TaskStatus, expectedTask.URL, "{}")
-
-	mock.ExpectQuery("SELECT (.+) FROM tasks WHERE id=?").
-		WithArgs(1).
-		WillReturnRows(rows)
-
-	task, err := repo.GetByID(context.Background(), 1)
-
-	assert.NoError(t, err)
-	assert.Equal(t, expectedTask.ID, task.ID)
-	assert.Equal(t, expectedTask.Method, task.Method)
-	assert.Equal(t, expectedTask.URL, task.URL)
-	assert.NoError(t, mock.ExpectationsWereMet())
-}
-
-func TestTasksRepository_Update(t *testing.T) {
-	type fields struct {
-		db *sql.DB
-	}
-	type args struct {
-		ctx  context.Context
-		id   int64
-		task domain.TaskUpdateInput
-	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
+		name          string
+		taskID        int64
+		expectedTask  domain.Task
+		expectedError error
 	}{
-		// TODO: Add test cases.
+		{
+			name:   "Successful retrieval",
+			taskID: 1,
+			expectedTask: domain.Task{
+				ID:     1,
+				Method: "GET",
+				URL:    "http://example.com",
+			},
+			expectedError: nil,
+		},
+		{
+			name:          "Failed retrieval",
+			taskID:        2,
+			expectedTask:  domain.Task{},
+			expectedError: sql.ErrNoRows,
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := &TasksRepository{
-				db: tt.fields.db,
+			if tt.expectedError == nil {
+				rows := sqlmock.NewRows([]string{"id", "method", "task_status", "url", "headers"}).
+					AddRow(tt.expectedTask.ID, tt.expectedTask.Method, tt.expectedTask.TaskStatus, tt.expectedTask.URL, "{}")
+				mock.ExpectQuery("SELECT (.+) FROM tasks WHERE id=?").WithArgs(tt.taskID).WillReturnRows(rows)
+			} else {
+				mock.ExpectQuery("SELECT (.+) FROM tasks WHERE id=?").WithArgs(tt.taskID).WillReturnError(tt.expectedError)
 			}
-			if err := r.Update(tt.args.ctx, tt.args.id, tt.args.task); (err != nil) != tt.wantErr {
-				t.Errorf("Update() error = %v, wantErr %v", err, tt.wantErr)
+
+			task, err := repo.GetByID(context.Background(), tt.taskID)
+
+			if tt.expectedError != nil {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expectedTask, task)
 			}
+
+			assert.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func TestGetAll(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	repo := NewTasksRepository(db)
+
+	tests := []struct {
+		name          string
+		expectedTasks []domain.Task
+		expectedError error
+	}{
+		{
+			name: "Successful retrieval",
+			expectedTasks: []domain.Task{
+				{ID: 1, Method: "GET", URL: "http://example.com"},
+				{ID: 2, Method: "POST", URL: "http://example.com/post"},
+			},
+			expectedError: nil,
+		},
+		{
+			name:          "Failed retrieval",
+			expectedTasks: nil,
+			expectedError: errors.New("database error"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.expectedError == nil {
+				rows := sqlmock.NewRows([]string{"id", "method", "task_status", "url", "headers"})
+				for _, task := range tt.expectedTasks {
+					rows.AddRow(task.ID, task.Method, task.TaskStatus, task.URL, "{}")
+				}
+				mock.ExpectQuery("SELECT (.+) FROM tasks").WillReturnRows(rows)
+			} else {
+				mock.ExpectQuery("SELECT (.+) FROM tasks").WillReturnError(tt.expectedError)
+			}
+
+			tasks, err := repo.GetAll(context.Background())
+
+			if tt.expectedError != nil {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expectedTasks, tasks)
+			}
+
+			assert.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func TestDelete(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	repo := NewTasksRepository(db)
+
+	tests := []struct {
+		name          string
+		taskID        int64
+		expectedError error
+	}{
+		{
+			name:          "Successful deletion",
+			taskID:        1,
+			expectedError: nil,
+		},
+		{
+			name:          "Failed deletion",
+			taskID:        2,
+			expectedError: errors.New("task not found"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.expectedError == nil {
+				mock.ExpectExec("DELETE FROM tasks WHERE id=?").WithArgs(tt.taskID).WillReturnResult(sqlmock.NewResult(0, 1))
+			} else {
+				mock.ExpectExec("DELETE FROM tasks WHERE id=?").WithArgs(tt.taskID).WillReturnError(tt.expectedError)
+			}
+
+			err := repo.Delete(context.Background(), tt.taskID)
+
+			if tt.expectedError != nil {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+
+			assert.NoError(t, mock.ExpectationsWereMet())
 		})
 	}
 }
