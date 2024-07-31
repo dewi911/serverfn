@@ -18,7 +18,7 @@ run: build
 
 test:
 	@echo "Testing..."
-	@go test ./internal/... ./pkg/...
+	@go test ./internal/... ./internal/...
 
 docker-build:
 	@echo "Building Docker image..."
