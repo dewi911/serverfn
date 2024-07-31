@@ -63,15 +63,15 @@ make docker-compose-up
 
 В проекте доступны следующие команды:
 
-##### `make build:` Сборка проекта
-##### `make run:` Запуск сервера
-##### `make test:` Запуск тестов
-##### `make docker-build:` Сборка Docker-образа
-##### `make docker-compose-up:` Запуск сервисов через Docker Compose
-##### `make docker-compose-down:` Остановка сервисов Docker Compose
-##### `make swag-init:` Инициализация Swagger-документации
-##### `make clean:` Очистка бинарных файлов
-##### `make env:` Создание файла .env из примера
+##### `make build`: Сборка проекта
+##### `make run`: Запуск сервера
+##### `make test`: Запуск тестов
+##### `make docker-build`: Сборка Docker-образа
+##### `make docker-compose-up`: Запуск сервисов через Docker Compose
+##### `make docker-compose-down`: Остановка сервисов Docker Compose
+##### `make swag-init`: Инициализация Swagger-документации
+##### `make clean`: Очистка бинарных файлов
+##### `make env`: Создание файла .env из примера
 
 
 ## Миграции
@@ -153,7 +153,7 @@ http://localhost:8080/task/1
 
 Для наглядной проверки работоспособности сервера использовать сваггер:
 
-```http request
+```bash
 http://localhost:8080/swagger/index.html
 ```
 
