@@ -6,9 +6,9 @@ import (
 	"fmt"
 	_ "github.com/dewi911/serverfn/docs"
 	"github.com/dewi911/serverfn/internal/config"
+	"github.com/dewi911/serverfn/internal/models"
 	"github.com/dewi911/serverfn/internal/repository/psql"
 	"github.com/dewi911/serverfn/internal/service"
-	"github.com/dewi911/serverfn/internal/taskmanager"
 	"github.com/dewi911/serverfn/internal/transport/rest"
 	"github.com/dewi911/serverfn/pkg/database"
 	_ "github.com/lib/pq"
@@ -57,7 +57,7 @@ func main() {
 
 	//init deps
 	repo := psql.NewRepositories(db)
-	tm := taskmanager.NewTaskManager(cfg.QueueCapacity, cfg.WorkerPoolSize, repo.GetTaskRepository(), log.New())
+	tm := service.NewTaskManager(cfg.QueueCapacity, cfg.WorkerPoolSize, repo.GetTaskRepository(), log.New())
 	services := service.NewServices(repo, tm)
 	handler := rest.NewHandler(services)
 
@@ -80,7 +80,7 @@ func main() {
 	log.Info("Main: exiting")
 }
 
-func gracefulShutdown(srv *http.Server, tm taskmanager.TaskManager, db *sql.DB, logger *log.Logger) {
+func gracefulShutdown(srv *http.Server, tm models.TaskManager, db *sql.DB, logger *log.Logger) {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 	<-stop

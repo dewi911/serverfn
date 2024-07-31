@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/dewi911/serverfn/internal/domain"
+	"github.com/dewi911/serverfn/internal/models"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -22,16 +22,16 @@ func TestCreate(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		task          domain.Task
+		task          models.Task
 		expectedID    int64
 		expectedError error
 	}{
 		{
 			name: "Successful creation",
-			task: domain.Task{
+			task: models.Task{
 				Method: "GET",
 				URL:    "http://example.com",
-				Headers: domain.Headers{
+				Headers: models.Headers{
 					Authentication: "Bearer token",
 				},
 			},
@@ -40,7 +40,7 @@ func TestCreate(t *testing.T) {
 		},
 		{
 			name: "Failed creation",
-			task: domain.Task{
+			task: models.Task{
 				Method: "POST",
 				URL:    "http://example.com/post",
 			},
@@ -84,13 +84,13 @@ func TestGetByID(t *testing.T) {
 	tests := []struct {
 		name          string
 		taskID        int64
-		expectedTask  domain.Task
+		expectedTask  models.Task
 		expectedError error
 	}{
 		{
 			name:   "Successful retrieval",
 			taskID: 1,
-			expectedTask: domain.Task{
+			expectedTask: models.Task{
 				ID:     1,
 				Method: "GET",
 				URL:    "http://example.com",
@@ -100,7 +100,7 @@ func TestGetByID(t *testing.T) {
 		{
 			name:          "Failed retrieval",
 			taskID:        2,
-			expectedTask:  domain.Task{},
+			expectedTask:  models.Task{},
 			expectedError: sql.ErrNoRows,
 		},
 	}
@@ -140,12 +140,12 @@ func TestGetAll(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		expectedTasks []domain.Task
+		expectedTasks []models.Task
 		expectedError error
 	}{
 		{
 			name: "Successful retrieval",
-			expectedTasks: []domain.Task{
+			expectedTasks: []models.Task{
 				{ID: 1, Method: "GET", URL: "http://example.com"},
 				{ID: 2, Method: "POST", URL: "http://example.com/post"},
 			},

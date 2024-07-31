@@ -2,7 +2,7 @@ package rest
 
 import (
 	"encoding/json"
-	"github.com/dewi911/serverfn/internal/domain"
+	"github.com/dewi911/serverfn/internal/models"
 	"io"
 	"net/http"
 )
@@ -12,8 +12,8 @@ import (
 // @Tags tasks
 // @Accept json
 // @Produce json
-// @Param task body domain.TaskCreateInput true "Create task"
-// @Success 200 {object} domain.TaskResponse
+// @Param task body models.TaskCreateInput true "Create task"
+// @Success 200 {object} models.TaskResponse
 // @Router /task [post]
 func (h *Handler) CreateTask(w http.ResponseWriter, r *http.Request) {
 	reqBytes, err := io.ReadAll(r.Body)
@@ -23,7 +23,7 @@ func (h *Handler) CreateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var inp domain.Task
+	var inp models.Task
 	if err := json.Unmarshal(reqBytes, &inp); err != nil {
 		logError("CreateTask", "unmarshal json", err)
 		w.WriteHeader(http.StatusBadRequest)
@@ -60,7 +60,7 @@ func (h *Handler) CreateTask(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Task ID"
-// @Success 200 {object} domain.Task
+// @Success 200 {object} models.Task
 // @Router /task/{id} [get]
 func (h *Handler) GetTask(w http.ResponseWriter, r *http.Request) {
 	id, err := getIdFromRequest(r)
@@ -93,7 +93,7 @@ func (h *Handler) GetTask(w http.ResponseWriter, r *http.Request) {
 // @Tags tasks
 // @Accept json
 // @Produce json
-// @Success 200 {array} domain.Task
+// @Success 200 {array} models.Task
 // @Router /task [get]
 func (h *Handler) GetAllTasks(w http.ResponseWriter, r *http.Request) {
 	tasks, err := h.taskService.GetAllTask(r.Context())
@@ -146,7 +146,7 @@ func (h *Handler) DeleteTask(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Task ID"
-// @Param task body domain.TaskUpdateInput true "Update task"
+// @Param task body models.TaskUpdateInput true "Update task"
 // @Success 200 "OK"
 // @Router /task/{id} [put]
 func (h *Handler) UpdateTask(w http.ResponseWriter, r *http.Request) {
@@ -157,7 +157,7 @@ func (h *Handler) UpdateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var inp domain.TaskUpdateInput
+	var inp models.TaskUpdateInput
 	if err := json.NewDecoder(r.Body).Decode(&inp); err != nil {
 		logError("UpdateTask", "decode request body", err)
 		w.WriteHeader(http.StatusBadRequest)

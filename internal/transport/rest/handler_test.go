@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/dewi911/serverfn/internal/domain"
+	"github.com/dewi911/serverfn/internal/models"
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"net/http/httptest"
@@ -22,19 +22,19 @@ type MockTaskService struct {
 	mock.Mock
 }
 
-func (m *MockTaskService) CreateTask(ctx context.Context, task domain.Task) (domain.TaskResponse, error) {
+func (m *MockTaskService) CreateTask(ctx context.Context, task models.Task) (models.TaskResponse, error) {
 	args := m.Called(ctx, task)
-	return args.Get(0).(domain.TaskResponse), args.Error(1)
+	return args.Get(0).(models.TaskResponse), args.Error(1)
 }
 
-func (m *MockTaskService) GetTask(ctx context.Context, id int64) (domain.Task, error) {
+func (m *MockTaskService) GetTask(ctx context.Context, id int64) (models.Task, error) {
 	args := m.Called(ctx, id)
-	return args.Get(0).(domain.Task), args.Error(1)
+	return args.Get(0).(models.Task), args.Error(1)
 }
 
-func (m *MockTaskService) GetAllTask(ctx context.Context) ([]domain.Task, error) {
+func (m *MockTaskService) GetAllTask(ctx context.Context) ([]models.Task, error) {
 	args := m.Called(ctx)
-	return args.Get(0).([]domain.Task), args.Error(1)
+	return args.Get(0).([]models.Task), args.Error(1)
 }
 
 func (m *MockTaskService) RemoveTask(ctx context.Context, id int64) error {
@@ -42,7 +42,7 @@ func (m *MockTaskService) RemoveTask(ctx context.Context, id int64) error {
 	return args.Error(0)
 }
 
-func (m *MockTaskService) UpdateTask(ctx context.Context, id int64, task domain.TaskUpdateInput) error {
+func (m *MockTaskService) UpdateTask(ctx context.Context, id int64, task models.TaskUpdateInput) error {
 	args := m.Called(ctx, id, task)
 	return args.Error(0)
 }
@@ -53,14 +53,14 @@ func TestCreateTask(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		input          domain.Task
+		input          models.Task
 		expectedStatus int
 		expectedID     int64
 		mockError      error
 	}{
 		{
 			name: "Successful creation",
-			input: domain.Task{
+			input: models.Task{
 				Method: "GET",
 				URL:    "http://example.com",
 			},
@@ -70,7 +70,7 @@ func TestCreateTask(t *testing.T) {
 		},
 		{
 			name: "Failed creation",
-			input: domain.Task{
+			input: models.Task{
 				Method: "POST",
 				URL:    "http://example.com/post",
 			},
@@ -82,7 +82,7 @@ func TestCreateTask(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockService.On("CreateTask", mock.Anything, tt.input).Return(domain.TaskResponse{ID: tt.expectedID}, tt.mockError).Once()
+			mockService.On("CreateTask", mock.Anything, tt.input).Return(models.TaskResponse{ID: tt.expectedID}, tt.mockError).Once()
 
 			body, _ := json.Marshal(tt.input)
 			req, _ := http.NewRequest("POST", "/task", bytes.NewBuffer(body))
@@ -93,7 +93,7 @@ func TestCreateTask(t *testing.T) {
 			assert.Equal(t, tt.expectedStatus, rr.Code)
 
 			if tt.mockError == nil {
-				var response domain.TaskResponse
+				var response models.TaskResponse
 				json.Unmarshal(rr.Body.Bytes(), &response)
 				assert.Equal(t, tt.expectedID, response.ID)
 			}
@@ -111,14 +111,14 @@ func TestGetTask(t *testing.T) {
 		name           string
 		taskID         string
 		expectedStatus int
-		mockTask       domain.Task
+		mockTask       models.Task
 		mockError      error
 	}{
 		{
 			name:           "Successful retrieval",
 			taskID:         "1",
 			expectedStatus: http.StatusOK,
-			mockTask: domain.Task{
+			mockTask: models.Task{
 				ID:     1,
 				Method: "GET",
 				URL:    "http://example.com",
@@ -129,7 +129,7 @@ func TestGetTask(t *testing.T) {
 			name:           "Task not found",
 			taskID:         "2",
 			expectedStatus: http.StatusInternalServerError,
-			mockTask:       domain.Task{},
+			mockTask:       models.Task{},
 			mockError:      errors.New("task not found"),
 		},
 	}
@@ -150,7 +150,7 @@ func TestGetTask(t *testing.T) {
 			assert.Equal(t, tt.expectedStatus, rr.Code)
 
 			if tt.mockError == nil {
-				var response domain.Task
+				var response models.Task
 				json.Unmarshal(rr.Body.Bytes(), &response)
 				assert.Equal(t, tt.mockTask, response)
 			}
@@ -167,13 +167,13 @@ func TestGetAllTasks(t *testing.T) {
 	tests := []struct {
 		name           string
 		expectedStatus int
-		mockTasks      []domain.Task
+		mockTasks      []models.Task
 		mockError      error
 	}{
 		{
 			name:           "Successful retrieval",
 			expectedStatus: http.StatusOK,
-			mockTasks: []domain.Task{
+			mockTasks: []models.Task{
 				{ID: 1, Method: "GET", URL: "http://example.com"},
 				{ID: 2, Method: "POST", URL: "http://example.com/post"},
 			},
@@ -199,7 +199,7 @@ func TestGetAllTasks(t *testing.T) {
 			assert.Equal(t, tt.expectedStatus, rr.Code)
 
 			if tt.mockError == nil {
-				var response []domain.Task
+				var response []models.Task
 				json.Unmarshal(rr.Body.Bytes(), &response)
 				assert.Equal(t, tt.mockTasks, response)
 			}
@@ -260,7 +260,7 @@ func TestUpdateTask(t *testing.T) {
 	tests := []struct {
 		name           string
 		taskID         string
-		input          domain.TaskUpdateInput
+		input          models.TaskUpdateInput
 		expectedStatus int
 		mockError      error
 		expectedLog    string
@@ -268,8 +268,8 @@ func TestUpdateTask(t *testing.T) {
 		{
 			name:   "Successful update",
 			taskID: "1",
-			input: domain.TaskUpdateInput{
-				Status: domain.TaskStatusDone,
+			input: models.TaskUpdateInput{
+				Status: models.TaskStatusDone,
 			},
 			expectedStatus: http.StatusOK,
 			mockError:      nil,
@@ -278,8 +278,8 @@ func TestUpdateTask(t *testing.T) {
 		{
 			name:   "Failed update",
 			taskID: "2",
-			input: domain.TaskUpdateInput{
-				Status: domain.TaskStatusError,
+			input: models.TaskUpdateInput{
+				Status: models.TaskStatusError,
 			},
 			expectedStatus: http.StatusInternalServerError,
 			mockError:      errors.New("database error"),

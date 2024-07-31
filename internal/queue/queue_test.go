@@ -1,7 +1,7 @@
 package queue
 
 import (
-	"github.com/dewi911/serverfn/internal/domain"
+	"github.com/dewi911/serverfn/internal/models"
 	"testing"
 	"time"
 
@@ -17,7 +17,7 @@ func TestNewTaskQueue(t *testing.T) {
 func TestEnqueueDequeue(t *testing.T) {
 	q := NewTaskQueue(1)
 
-	task := &domain.Task{
+	task := &models.Task{
 		ID:     1,
 		Method: "GET",
 		URL:    "http://example.com",
@@ -33,7 +33,7 @@ func TestEnqueueDequeue(t *testing.T) {
 func TestClose(t *testing.T) {
 	q := NewTaskQueue(1)
 
-	task := &domain.Task{
+	task := &models.Task{
 		ID:     1,
 		Method: "GET",
 		URL:    "http://example.com",
@@ -57,7 +57,7 @@ func TestEnqueueAfterClose(t *testing.T) {
 
 	q.Close()
 
-	task := &domain.Task{
+	task := &models.Task{
 		ID:     1,
 		Method: "GET",
 		URL:    "http://example.com",

@@ -1,8 +1,9 @@
 package worker
 
 import (
-	"github.com/dewi911/serverfn/internal/domain"
+	"github.com/dewi911/serverfn/internal/models"
 	"github.com/dewi911/serverfn/internal/queue"
+	"github.com/dewi911/serverfn/internal/service"
 	"github.com/sirupsen/logrus"
 	"reflect"
 	"testing"
@@ -12,7 +13,7 @@ func TestNewWorker(t *testing.T) {
 	type args struct {
 		id        int
 		taskQueue queue.TaskQueue
-		taskRepo  domain.TaskRepository
+		taskRepo  service.TaskRepository
 		logger    *logrus.Logger
 	}
 	tests := []struct {
@@ -35,7 +36,7 @@ func TestWorker_Start(t *testing.T) {
 	type fields struct {
 		id        int
 		taskQueue queue.TaskQueue
-		taskRepo  domain.TaskRepository
+		taskRepo  service.TaskRepository
 		quit      chan struct{}
 		logger    *logrus.Logger
 	}
@@ -63,7 +64,7 @@ func TestWorker_Stop(t *testing.T) {
 	type fields struct {
 		id        int
 		taskQueue queue.TaskQueue
-		taskRepo  domain.TaskRepository
+		taskRepo  service.TaskRepository
 		quit      chan struct{}
 		logger    *logrus.Logger
 	}
@@ -91,12 +92,12 @@ func TestWorker_processTask(t *testing.T) {
 	type fields struct {
 		id        int
 		taskQueue queue.TaskQueue
-		taskRepo  domain.TaskRepository
+		taskRepo  service.TaskRepository
 		quit      chan struct{}
 		logger    *logrus.Logger
 	}
 	type args struct {
-		task *domain.Task
+		task *models.Task
 	}
 	tests := []struct {
 		name   string
@@ -123,13 +124,13 @@ func TestWorker_updateTaskStatus(t *testing.T) {
 	type fields struct {
 		id        int
 		taskQueue queue.TaskQueue
-		taskRepo  domain.TaskRepository
+		taskRepo  service.TaskRepository
 		quit      chan struct{}
 		logger    *logrus.Logger
 	}
 	type args struct {
-		task   *domain.Task
-		status domain.TaskStatus
+		task   *models.Task
+		status models.TaskStatus
 	}
 	tests := []struct {
 		name   string

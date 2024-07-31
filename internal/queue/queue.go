@@ -3,28 +3,28 @@
 package queue
 
 import (
-	"github.com/dewi911/serverfn/internal/domain"
+	"github.com/dewi911/serverfn/internal/models"
 	"sync"
 )
 
 type TaskQueue interface {
-	Enqueue(*domain.Task)
-	Dequeue() *domain.Task
+	Enqueue(*models.Task)
+	Dequeue() *models.Task
 	Close()
 }
 
 type taskQueue struct {
-	tasks chan *domain.Task
+	tasks chan *models.Task
 	wg    sync.WaitGroup
 }
 
 func NewTaskQueue(capacity int) TaskQueue {
 	return &taskQueue{
-		tasks: make(chan *domain.Task, capacity),
+		tasks: make(chan *models.Task, capacity),
 	}
 }
 
-func (q *taskQueue) Enqueue(task *domain.Task) {
+func (q *taskQueue) Enqueue(task *models.Task) {
 	q.wg.Add(1)
 	go func() {
 		defer q.wg.Done()
@@ -32,7 +32,7 @@ func (q *taskQueue) Enqueue(task *domain.Task) {
 	}()
 }
 
-func (q *taskQueue) Dequeue() *domain.Task {
+func (q *taskQueue) Dequeue() *models.Task {
 	return <-q.tasks
 }
 

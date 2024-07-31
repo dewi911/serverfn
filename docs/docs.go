@@ -34,7 +34,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/domain.Task"
+                                "$ref": "#/definitions/models.Task"
                             }
                         }
                     }
@@ -59,7 +59,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/domain.TaskCreateInput"
+                            "$ref": "#/definitions/models.TaskCreateInput"
                         }
                     }
                 ],
@@ -67,7 +67,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/domain.TaskResponse"
+                            "$ref": "#/definitions/models.TaskResponse"
                         }
                     }
                 }
@@ -99,7 +99,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/domain.Task"
+                            "$ref": "#/definitions/models.Task"
                         }
                     }
                 }
@@ -130,7 +130,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/domain.TaskUpdateInput"
+                            "$ref": "#/definitions/models.TaskUpdateInput"
                         }
                     }
                 ],
@@ -170,7 +170,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "domain.Headers": {
+        "models.Headers": {
             "type": "object",
             "properties": {
                 "HTTPStatusCode": {
@@ -202,11 +202,11 @@ const docTemplate = `{
                 }
             }
         },
-        "domain.Task": {
+        "models.Task": {
             "type": "object",
             "properties": {
                 "headers": {
-                    "$ref": "#/definitions/domain.Headers"
+                    "$ref": "#/definitions/models.Headers"
                 },
                 "id": {
                     "type": "integer",
@@ -219,7 +219,7 @@ const docTemplate = `{
                 "task_status": {
                     "allOf": [
                         {
-                            "$ref": "#/definitions/domain.TaskStatus"
+                            "$ref": "#/definitions/models.TaskStatus"
                         }
                     ],
                     "example": "new"
@@ -230,11 +230,11 @@ const docTemplate = `{
                 }
             }
         },
-        "domain.TaskCreateInput": {
+        "models.TaskCreateInput": {
             "type": "object",
             "properties": {
                 "headers": {
-                    "$ref": "#/definitions/domain.Headers"
+                    "$ref": "#/definitions/models.Headers"
                 },
                 "method": {
                     "type": "string",
@@ -243,7 +243,7 @@ const docTemplate = `{
                 "task_status": {
                     "allOf": [
                         {
-                            "$ref": "#/definitions/domain.TaskStatus"
+                            "$ref": "#/definitions/models.TaskStatus"
                         }
                     ],
                     "example": "new"
@@ -254,7 +254,7 @@ const docTemplate = `{
                 }
             }
         },
-        "domain.TaskResponse": {
+        "models.TaskResponse": {
             "type": "object",
             "properties": {
                 "id": {
@@ -262,7 +262,7 @@ const docTemplate = `{
                 }
             }
         },
-        "domain.TaskStatus": {
+        "models.TaskStatus": {
             "type": "string",
             "enum": [
                 "new",
@@ -277,14 +277,14 @@ const docTemplate = `{
                 "TaskStatusError"
             ]
         },
-        "domain.TaskUpdateInput": {
+        "models.TaskUpdateInput": {
             "type": "object",
             "required": [
                 "status"
             ],
             "properties": {
                 "status": {
-                    "$ref": "#/definitions/domain.TaskStatus"
+                    "$ref": "#/definitions/models.TaskStatus"
                 }
             }
         }

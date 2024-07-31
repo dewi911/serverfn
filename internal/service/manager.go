@@ -1,18 +1,12 @@
-package taskmanager
+package service
 
 import (
-	"github.com/dewi911/serverfn/internal/domain"
+	"github.com/dewi911/serverfn/internal/models"
 	"github.com/dewi911/serverfn/internal/queue"
 	"github.com/dewi911/serverfn/internal/worker"
 	"github.com/sirupsen/logrus"
 	"sync"
 )
-
-type TaskManager interface {
-	Start()
-	Stop()
-	CreateTask(task *domain.Task)
-}
 
 type taskManager struct {
 	taskQueue queue.TaskQueue
@@ -22,7 +16,7 @@ type taskManager struct {
 	quit      chan struct{}
 }
 
-func NewTaskManager(queueCapacity, workerCount int, taskRepo domain.TaskRepository, logger *logrus.Logger) TaskManager {
+func NewTaskManager(queueCapacity, workerCount int, taskRepo TaskRepository, logger *logrus.Logger) models.TaskManager {
 	taskQueue := queue.NewTaskQueue(queueCapacity)
 	tm := &taskManager{
 		taskQueue: taskQueue,
@@ -60,7 +54,7 @@ func (tm *taskManager) Stop() {
 	tm.logger.Info("Task manager stopped")
 }
 
-func (tm *taskManager) CreateTask(task *domain.Task) {
+func (tm *taskManager) CreateTask(task *models.Task) {
 	tm.taskQueue.Enqueue(task)
 	tm.logger.WithField("taskID", task.ID).Info("Task added to queue")
 }

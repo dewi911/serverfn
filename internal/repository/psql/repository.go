@@ -2,7 +2,7 @@ package psql
 
 import (
 	"database/sql"
-	"github.com/dewi911/serverfn/internal/domain"
+	"github.com/dewi911/serverfn/internal/service"
 )
 
 type Repositories struct {
@@ -15,6 +15,6 @@ func NewRepositories(db *sql.DB) *Repositories {
 	}
 }
 
-func (rs *Repositories) GetTaskRepository() domain.TaskRepository {
+func (rs *Repositories) GetTaskRepository() service.TaskRepository {
 	return rs.tasksRepository
 }
