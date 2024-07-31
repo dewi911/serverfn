@@ -3,7 +3,7 @@ package worker
 import (
 	"context"
 	"github.com/dewi911/serverfn/internal/models"
-	"github.com/dewi911/serverfn/internal/queue"
+	"github.com/dewi911/serverfn/utils/queue"
 	"io"
 	"net/http"
 	"time"

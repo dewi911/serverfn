@@ -2,8 +2,8 @@ package service
 
 import (
 	"github.com/dewi911/serverfn/internal/models"
-	"github.com/dewi911/serverfn/internal/queue"
-	"github.com/dewi911/serverfn/internal/worker"
+	"github.com/dewi911/serverfn/utils/queue"
+	"github.com/dewi911/serverfn/utils/worker"
 	"github.com/sirupsen/logrus"
 	"sync"
 )

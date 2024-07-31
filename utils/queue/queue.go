@@ -1,5 +1,3 @@
-// internal/queue/queue.go
-
 package queue
 
 import (
