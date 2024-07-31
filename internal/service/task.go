@@ -5,20 +5,20 @@ import (
 	"github.com/dewi911/serverfn/internal/models"
 )
 
-type TaskRepository interface {
-	Create(ctx context.Context, task models.Task) (int64, error)
-	GetByID(ctx context.Context, id int64) (models.Task, error)
-	GetAll(ctx context.Context) ([]models.Task, error)
-	Delete(ctx context.Context, id int64) error
-	Update(ctx context.Context, id int64, task models.TaskUpdateInput) error
+type TaskService interface {
+	CreateTask(ctx context.Context, task models.Task) (models.TaskResponse, error)
+	GetTask(ctx context.Context, id int64) (models.Task, error)
+	GetAllTask(ctx context.Context) ([]models.Task, error)
+	RemoveTask(ctx context.Context, id int64) error
+	UpdateTask(ctx context.Context, id int64, task models.TaskUpdateInput) error
 }
 
 type TasksService struct {
-	repo        TaskRepository
+	repo        models.TaskRepository
 	taskManager models.TaskManager
 }
 
-func NewTasksService(repo TaskRepository, tm models.TaskManager) *TasksService {
+func NewTasksService(repo models.TaskRepository, tm models.TaskManager) *TasksService {
 	return &TasksService{
 		repo:        repo,
 		taskManager: tm,

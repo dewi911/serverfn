@@ -3,7 +3,6 @@ package worker
 import (
 	"github.com/dewi911/serverfn/internal/models"
 	"github.com/dewi911/serverfn/internal/queue"
-	"github.com/dewi911/serverfn/internal/service"
 	"github.com/sirupsen/logrus"
 	"reflect"
 	"testing"
@@ -13,7 +12,7 @@ func TestNewWorker(t *testing.T) {
 	type args struct {
 		id        int
 		taskQueue queue.TaskQueue
-		taskRepo  service.TaskRepository
+		taskRepo  models.TaskRepository
 		logger    *logrus.Logger
 	}
 	tests := []struct {
@@ -36,7 +35,7 @@ func TestWorker_Start(t *testing.T) {
 	type fields struct {
 		id        int
 		taskQueue queue.TaskQueue
-		taskRepo  service.TaskRepository
+		taskRepo  models.TaskRepository
 		quit      chan struct{}
 		logger    *logrus.Logger
 	}
@@ -64,7 +63,7 @@ func TestWorker_Stop(t *testing.T) {
 	type fields struct {
 		id        int
 		taskQueue queue.TaskQueue
-		taskRepo  service.TaskRepository
+		taskRepo  models.TaskRepository
 		quit      chan struct{}
 		logger    *logrus.Logger
 	}
@@ -92,7 +91,7 @@ func TestWorker_processTask(t *testing.T) {
 	type fields struct {
 		id        int
 		taskQueue queue.TaskQueue
-		taskRepo  service.TaskRepository
+		taskRepo  models.TaskRepository
 		quit      chan struct{}
 		logger    *logrus.Logger
 	}
@@ -124,7 +123,7 @@ func TestWorker_updateTaskStatus(t *testing.T) {
 	type fields struct {
 		id        int
 		taskQueue queue.TaskQueue
-		taskRepo  service.TaskRepository
+		taskRepo  models.TaskRepository
 		quit      chan struct{}
 		logger    *logrus.Logger
 	}

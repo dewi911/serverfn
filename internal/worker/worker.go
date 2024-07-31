@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/dewi911/serverfn/internal/models"
 	"github.com/dewi911/serverfn/internal/queue"
-	"github.com/dewi911/serverfn/internal/service"
 	"io"
 	"net/http"
 	"time"
@@ -15,12 +14,12 @@ import (
 type Worker struct {
 	id        int
 	taskQueue queue.TaskQueue
-	taskRepo  service.TaskRepository
+	taskRepo  models.TaskRepository
 	quit      chan struct{}
 	logger    *logrus.Logger
 }
 
-func NewWorker(id int, taskQueue queue.TaskQueue, taskRepo service.TaskRepository, logger *logrus.Logger) *Worker {
+func NewWorker(id int, taskQueue queue.TaskQueue, taskRepo models.TaskRepository, logger *logrus.Logger) *Worker {
 	return &Worker{
 		id:        id,
 		taskQueue: taskQueue,

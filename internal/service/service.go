@@ -2,20 +2,19 @@ package service
 
 import (
 	"github.com/dewi911/serverfn/internal/models"
-	"github.com/dewi911/serverfn/internal/transport/rest"
 )
 
 //go:generate mockgen -source=service.go -destination=mocks/mock.go
 
 type Repositories interface {
-	GetTaskRepository() TaskRepository
+	GetTaskRepository() models.TaskRepository
 }
 
 type Services struct {
 	taskService *TasksService
 }
 
-func (ss *Services) GetTaskService() rest.TaskService {
+func (ss *Services) GetTaskService() TaskService {
 	return ss.taskService
 }
 

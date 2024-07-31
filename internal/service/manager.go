@@ -16,7 +16,7 @@ type taskManager struct {
 	quit      chan struct{}
 }
 
-func NewTaskManager(queueCapacity, workerCount int, taskRepo TaskRepository, logger *logrus.Logger) models.TaskManager {
+func NewTaskManager(queueCapacity, workerCount int, taskRepo models.TaskRepository, logger *logrus.Logger) models.TaskManager {
 	taskQueue := queue.NewTaskQueue(queueCapacity)
 	tm := &taskManager{
 		taskQueue: taskQueue,
