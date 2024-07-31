@@ -28,7 +28,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/domain.Task"
+                                "$ref": "#/definitions/models.Task"
                             }
                         }
                     }
@@ -53,7 +53,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/domain.TaskCreateInput"
+                            "$ref": "#/definitions/models.TaskCreateInput"
                         }
                     }
                 ],
@@ -61,7 +61,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/domain.TaskResponse"
+                            "$ref": "#/definitions/models.TaskResponse"
                         }
                     }
                 }
@@ -93,7 +93,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/domain.Task"
+                            "$ref": "#/definitions/models.Task"
                         }
                     }
                 }
@@ -124,7 +124,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/domain.TaskUpdateInput"
+                            "$ref": "#/definitions/models.TaskUpdateInput"
                         }
                     }
                 ],
@@ -164,7 +164,7 @@
         }
     },
     "definitions": {
-        "domain.Headers": {
+        "models.Headers": {
             "type": "object",
             "properties": {
                 "HTTPStatusCode": {
@@ -196,11 +196,11 @@
                 }
             }
         },
-        "domain.Task": {
+        "models.Task": {
             "type": "object",
             "properties": {
                 "headers": {
-                    "$ref": "#/definitions/domain.Headers"
+                    "$ref": "#/definitions/models.Headers"
                 },
                 "id": {
                     "type": "integer",
@@ -213,7 +213,7 @@
                 "task_status": {
                     "allOf": [
                         {
-                            "$ref": "#/definitions/domain.TaskStatus"
+                            "$ref": "#/definitions/models.TaskStatus"
                         }
                     ],
                     "example": "new"
@@ -224,11 +224,11 @@
                 }
             }
         },
-        "domain.TaskCreateInput": {
+        "models.TaskCreateInput": {
             "type": "object",
             "properties": {
                 "headers": {
-                    "$ref": "#/definitions/domain.Headers"
+                    "$ref": "#/definitions/models.Headers"
                 },
                 "method": {
                     "type": "string",
@@ -237,7 +237,7 @@
                 "task_status": {
                     "allOf": [
                         {
-                            "$ref": "#/definitions/domain.TaskStatus"
+                            "$ref": "#/definitions/models.TaskStatus"
                         }
                     ],
                     "example": "new"
@@ -248,7 +248,7 @@
                 }
             }
         },
-        "domain.TaskResponse": {
+        "models.TaskResponse": {
             "type": "object",
             "properties": {
                 "id": {
@@ -256,29 +256,27 @@
                 }
             }
         },
-        "domain.TaskStatus": {
+        "models.TaskStatus": {
             "type": "string",
             "enum": [
                 "new",
-                "in_process",
                 "done",
                 "error"
             ],
             "x-enum-varnames": [
                 "TaskStatusNew",
-                "TaskStatusInProcess",
                 "TaskStatusDone",
                 "TaskStatusError"
             ]
         },
-        "domain.TaskUpdateInput": {
+        "models.TaskUpdateInput": {
             "type": "object",
             "required": [
                 "status"
             ],
             "properties": {
                 "status": {
-                    "$ref": "#/definitions/domain.TaskStatus"
+                    "$ref": "#/definitions/models.TaskStatus"
                 }
             }
         }

@@ -266,13 +266,11 @@ const docTemplate = `{
             "type": "string",
             "enum": [
                 "new",
-                "in_process",
                 "done",
                 "error"
             ],
             "x-enum-varnames": [
                 "TaskStatusNew",
-                "TaskStatusInProcess",
                 "TaskStatusDone",
                 "TaskStatusError"
             ]

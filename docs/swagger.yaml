@@ -1,6 +1,6 @@
 basePath: /
 definitions:
-  domain.Headers:
+  models.Headers:
     properties:
       HTTPStatusCode:
         type: integer
@@ -21,10 +21,10 @@ definitions:
       responseLength:
         type: integer
     type: object
-  domain.Task:
+  models.Task:
     properties:
       headers:
-        $ref: '#/definitions/domain.Headers'
+        $ref: '#/definitions/models.Headers'
       id:
         example: 1
         type: integer
@@ -33,48 +33,46 @@ definitions:
         type: string
       task_status:
         allOf:
-        - $ref: '#/definitions/domain.TaskStatus'
+        - $ref: '#/definitions/models.TaskStatus'
         example: new
       url:
         example: http://google.com
         type: string
     type: object
-  domain.TaskCreateInput:
+  models.TaskCreateInput:
     properties:
       headers:
-        $ref: '#/definitions/domain.Headers'
+        $ref: '#/definitions/models.Headers'
       method:
         example: GET
         type: string
       task_status:
         allOf:
-        - $ref: '#/definitions/domain.TaskStatus'
+        - $ref: '#/definitions/models.TaskStatus'
         example: new
       url:
         example: http://google.com
         type: string
     type: object
-  domain.TaskResponse:
+  models.TaskResponse:
     properties:
       id:
         type: integer
     type: object
-  domain.TaskStatus:
+  models.TaskStatus:
     enum:
     - new
-    - in_process
     - done
     - error
     type: string
     x-enum-varnames:
     - TaskStatusNew
-    - TaskStatusInProcess
     - TaskStatusDone
     - TaskStatusError
-  domain.TaskUpdateInput:
+  models.TaskUpdateInput:
     properties:
       status:
-        $ref: '#/definitions/domain.TaskStatus'
+        $ref: '#/definitions/models.TaskStatus'
     required:
     - status
     type: object
@@ -97,7 +95,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/domain.Task'
+              $ref: '#/definitions/models.Task'
             type: array
       summary: Get all tasks
       tags:
@@ -112,14 +110,14 @@ paths:
         name: task
         required: true
         schema:
-          $ref: '#/definitions/domain.TaskCreateInput'
+          $ref: '#/definitions/models.TaskCreateInput'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/domain.TaskResponse'
+            $ref: '#/definitions/models.TaskResponse'
       summary: Create a new task
       tags:
       - tasks
@@ -158,7 +156,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/domain.Task'
+            $ref: '#/definitions/models.Task'
       summary: Get a task by ID
       tags:
       - tasks
@@ -177,7 +175,7 @@ paths:
         name: task
         required: true
         schema:
-          $ref: '#/definitions/domain.TaskUpdateInput'
+          $ref: '#/definitions/models.TaskUpdateInput'
       produces:
       - application/json
       responses:

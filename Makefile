@@ -34,7 +34,7 @@ docker-compose-down:
 
 swag-init:
 	@echo "Initializing Swagger docs..."
-	@swag init -g ./internal/app/app.go
+	@swag init -g internal/transport/rest/handler.go
 
 migrate-up:
 	@echo "Running database migrations..."
