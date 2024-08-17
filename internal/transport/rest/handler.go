@@ -1,9 +1,10 @@
 package rest
 
 import (
+	"context"
 	"errors"
 	_ "github.com/dewi911/serverfn/docs"
-	"github.com/dewi911/serverfn/internal/service"
+	"github.com/dewi911/serverfn/internal/models"
 	"github.com/gorilla/mux"
 	httpSwagger "github.com/swaggo/http-swagger"
 	"net/http"
@@ -15,17 +16,22 @@ import (
 // @description This is a server API.
 // @host localhost:8080
 // @BasePath /
-type Services interface {
-	GetTaskService() service.TaskService
+
+type TaskService interface {
+	CreateTask(ctx context.Context, task models.Task) (models.TaskResponse, error)
+	GetTask(ctx context.Context, id int64) (models.Task, error)
+	GetAllTask(ctx context.Context) ([]models.Task, error)
+	RemoveTask(ctx context.Context, id int64) error
+	UpdateTask(ctx context.Context, id int64, task models.TaskUpdateInput) error
 }
 
 type Handler struct {
-	taskService service.TaskService
+	taskService TaskService
 }
 
-func NewHandler(s Services) *Handler {
+func NewHandler(taskService TaskService) *Handler {
 	return &Handler{
-		taskService: s.GetTaskService(),
+		taskService: taskService,
 	}
 }
 

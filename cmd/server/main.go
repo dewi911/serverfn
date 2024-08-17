@@ -56,9 +56,9 @@ func main() {
 	defer db.Close()
 
 	//init deps
-	repo := psql.NewRepositories(db)
-	tm := service.NewTaskManager(cfg.QueueCapacity, cfg.WorkerPoolSize, repo.GetTaskRepository(), log.New())
-	services := service.NewServices(repo, tm)
+	repo := psql.NewTasksRepository(db)
+	tm := service.NewTaskManager(cfg.QueueCapacity, cfg.WorkerPoolSize, repo, log.New())
+	services := service.NewTasksService(repo, tm)
 	handler := rest.NewHandler(services)
 
 	//start manager
